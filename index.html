@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Révision grec ancien</title>
+<title>Γυμνάζου!</title>
 
 <style>
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   margin: 0;
@@ -27,15 +26,11 @@ body {
 
 h1 {
   margin-top: 0;
-}
-
-.instruction {
-  color: #666;
-  line-height: 1.5;
+  font-size: 30px;
 }
 
 .question {
-  margin: 30px 0 20px;
+  margin: 35px 0 20px;
   font-size: 34px;
   font-weight: 700;
 }
@@ -47,20 +42,19 @@ input {
   font-size: 24px;
   border-radius: 12px;
   border: 1px solid #bbb;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .declensions {
   display: flex;
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .declensions button {
+  flex: 1;
   background: #e5e5ea;
   color: #111;
-  font-size: 16px;
-  padding: 12px 5px;
 }
 
 .declensions button.selected {
@@ -114,7 +108,6 @@ button.secondary {
   border-top: 1px solid #eee;
   color: #666;
 }
-
 </style>
 </head>
 
@@ -122,225 +115,121 @@ button.secondary {
 
 <div class="app">
 
-<h1>Grec ancien</h1>
-
-<div class="instruction">
-
-Pour un nom, écris :
-
-<strong>article + nominatif + terminaison du génitif</strong>
-
-<br><br>
-
-Exemple :<br>
-<strong>ὁ ἱππος ου</strong>
-
-<br><br>
-
-Puis choisis sa déclinaison.
-
-<br><br>
-
-✓ Esprits obligatoires<br>
-✓ Accents facultatifs<br>
-✓ Pas de virgule
-
-</div>
-
+<h1>Γυμνάζου!</h1>
 
 <div id="question" class="question"></div>
 
-
 <input
-id="answer"
-type="text"
-placeholder="ὁ ἱππος ου"
-autocomplete="off"
-autocapitalize="none"
-spellcheck="false"
+  id="answer"
+  type="text"
+  placeholder="Réponse en grec"
+  autocomplete="off"
+  autocapitalize="none"
+  spellcheck="false"
 >
 
-
 <div class="declensions">
-
-<button
-id="decl1"
-onclick="selectDeclension(1)">
-1re
-</button>
-
-<button
-id="decl2"
-onclick="selectDeclension(2)">
-2e
-</button>
-
-<button
-id="decl3"
-onclick="selectDeclension(3)">
-3e
-</button>
-
+  <button id="decl1" onclick="selectDeclension(1)">1re</button>
+  <button id="decl2" onclick="selectDeclension(2)">2e</button>
+  <button id="decl3" onclick="selectDeclension(3)">3e</button>
 </div>
 
+<button onclick="checkAnswer()">Vérifier</button>
 
-<button onclick="checkAnswer()">
-Vérifier
+<button class="secondary" onclick="nextWord()">
+  Mot suivant
 </button>
 
-<button
-class="secondary"
-onclick="nextWord()">
-Mot suivant
-</button>
-
-
-<div
-id="feedback"
-class="feedback">
-</div>
-
-<div
-id="stats"
-class="stats">
-</div>
+<div id="feedback" class="feedback"></div>
+<div id="stats" class="stats"></div>
 
 </div>
-
 
 <script>
 
-/* ===========================
-   LEXIQUE
-   =========================== */
-
 const lexicon = [
-
-{
-  fr: "la mer",
-  article: "ἡ",
-  word: "θάλασσα",
-  genitive: "ης",
-  fullGenitive: "θαλάσσης",
-  declension: 1
-},
-
-{
-  fr: "le cheval",
-  article: "ὁ",
-  word: "ἵππος",
-  genitive: "ου",
-  fullGenitive: "ἵππου",
-  declension: 2
-},
-
-{
-  fr: "le lion",
-  article: "ὁ",
-  word: "λέων",
-  genitive: "οντος",
-  fullGenitive: "λέοντος",
-  declension: 3
-},
-
-{
-  fr: "le loup",
-  article: "ὁ",
-  word: "λύκος",
-  genitive: "ου",
-  fullGenitive: "λύκου",
-  declension: 2
-},
-
-{
-  fr: "le taureau",
-  article: "ὁ",
-  word: "ταῦρος",
-  genitive: "ου",
-  fullGenitive: "ταύρου",
-  declension: 2
-},
-
-{
-  fr: "l'eau",
-  article: "τό",
-  word: "ὕδωρ",
-  genitive: "ατος",
-  fullGenitive: "ὕδατος",
-  declension: 3
-},
-
-{
-  fr: "la ville",
-  article: "ἡ",
-  word: "πόλις",
-  genitive: "εως",
-  fullGenitive: "πόλεως",
-  declension: 3
-},
-
-{
-  fr: "le cygne",
-  article: "ὁ",
-  word: "κύκνος",
-  genitive: "ου",
-  fullGenitive: "κύκνου",
-  declension: 2
-},
-
-{
-  fr: "le chien",
-  article: "ὁ",
-  word: "κύων",
-  genitive: "ος",
-  fullGenitive: "κυνός",
-  declension: 3
-}
-
+  {
+    fr: "la mer",
+    article: "ἡ",
+    word: "θάλασσα",
+    genitive: "ης",
+    fullGenitive: "θαλάσσης",
+    declension: 1
+  },
+  {
+    fr: "le cheval",
+    article: "ὁ",
+    word: "ἵππος",
+    genitive: "ου",
+    fullGenitive: "ἵππου",
+    declension: 2
+  },
+  {
+    fr: "le lion",
+    article: "ὁ",
+    word: "λέων",
+    genitive: "οντος",
+    fullGenitive: "λέοντος",
+    declension: 3
+  },
+  {
+    fr: "le loup",
+    article: "ὁ",
+    word: "λύκος",
+    genitive: "ου",
+    fullGenitive: "λύκου",
+    declension: 2
+  },
+  {
+    fr: "le taureau",
+    article: "ὁ",
+    word: "ταῦρος",
+    genitive: "ου",
+    fullGenitive: "ταύρου",
+    declension: 2
+  },
+  {
+    fr: "l'eau",
+    article: "τό",
+    word: "ὕδωρ",
+    genitive: "ατος",
+    fullGenitive: "ὕδατος",
+    declension: 3
+  },
+  {
+    fr: "la ville",
+    article: "ἡ",
+    word: "πόλις",
+    genitive: "εως",
+    fullGenitive: "πόλεως",
+    declension: 3
+  },
+  {
+    fr: "le cygne",
+    article: "ὁ",
+    word: "κύκνος",
+    genitive: "ου",
+    fullGenitive: "κύκνου",
+    declension: 2
+  },
+  {
+    fr: "le chien",
+    article: "ὁ",
+    word: "κύων",
+    genitive: "ος",
+    fullGenitive: "κυνός",
+    declension: 3
+  }
 ];
 
-
-/* ===========================
-   ÉTAT
-   =========================== */
-
-let currentIndex =
-  Math.floor(Math.random() * lexicon.length);
-
+let currentIndex = Math.floor(Math.random() * lexicon.length);
 let selectedDeclension = null;
-
 let score = 0;
 let attempts = 0;
-
 let answered = false;
 
-
-
-/* ===========================
-   NORMALISATION DU GREC
-
-   IMPORTANT :
-
-   on SUPPRIME les accents
-
-   mais on CONSERVE :
-   esprit doux
-   esprit rude
-
-   Ainsi :
-
-   ἵππος -> ἱππος
-
-   mais
-
-   ἵππος n'est PAS équivalent
-   à ἴππος
-   =========================== */
-
 function normalizeGreek(text) {
-
-  let chars =
-    text.normalize("NFD");
+  let chars = text.normalize("NFD");
 
   chars = chars.replace(
     /[\u0300\u0301\u0340\u0341\u0342]/g,
@@ -352,397 +241,161 @@ function normalizeGreek(text) {
     .toLowerCase()
     .trim()
     .replace(/\s+/g, " ");
-
 }
-
-
-/* ===========================
-   ANALYSE DE LA RÉPONSE
-
-   Format :
-
-   ὁ ἱππος ου
-
-   PAS DE VIRGULE
-   =========================== */
 
 function parseAnswer(text) {
+  const parts = text.trim().replace(/\s+/g, " ").split(" ");
 
-  const cleaned = text
-    .trim()
-    .replace(/\s+/g, " ");
-
-  const parts =
-    cleaned.split(" ");
-
-  if (parts.length !== 3) {
-    return null;
-  }
+  if (parts.length !== 3) return null;
 
   return {
-
     article: parts[0],
-
     word: parts[1],
-
     genitive: parts[2]
-
   };
-
 }
 
-
-/* ===========================
-   CHOIX DÉCLINAISON
-   =========================== */
-
 function selectDeclension(number) {
-
   selectedDeclension = number;
 
   for (let i = 1; i <= 3; i++) {
-
-    document
-      .getElementById("decl" + i)
+    document.getElementById("decl" + i)
       .classList.remove("selected");
-
   }
 
-  document
-    .getElementById("decl" + number)
+  document.getElementById("decl" + number)
     .classList.add("selected");
-
 }
 
-
-/* ===========================
-   AFFICHER UN MOT
-   =========================== */
-
 function showWord() {
+  document.getElementById("question").textContent =
+    lexicon[currentIndex].fr;
 
-  const current =
-    lexicon[currentIndex];
-
-  document
-    .getElementById("question")
-    .textContent =
-    current.fr;
-
-  document
-    .getElementById("answer")
-    .value = "";
-
-  document
-    .getElementById("feedback")
-    .innerHTML = "";
+  document.getElementById("answer").value = "";
+  document.getElementById("feedback").innerHTML = "";
 
   selectedDeclension = null;
-
   answered = false;
 
   for (let i = 1; i <= 3; i++) {
-
-    document
-      .getElementById("decl" + i)
+    document.getElementById("decl" + i)
       .classList.remove("selected");
-
   }
 
-  document
-    .getElementById("answer")
-    .focus();
-
+  document.getElementById("answer").focus();
 }
 
-
-/* ===========================
-   VÉRIFICATION
-   =========================== */
-
 function checkAnswer() {
+  if (answered) return;
 
-  if (answered) {
-    return;
-  }
-
-  const current =
-    lexicon[currentIndex];
-
-  const user =
-    parseAnswer(
-      document
-        .getElementById("answer")
-        .value
-    );
-
+  const current = lexicon[currentIndex];
+  const user = parseAnswer(
+    document.getElementById("answer").value
+  );
 
   if (!user) {
-
-    document
-      .getElementById("feedback")
-      .innerHTML =
-
-      `
-      <div class="wrong">
-      Réponse non reconnue.
-      </div>
-
-      Écris simplement trois éléments :
-
-      <div class="correction">
-      article nominatif génitif
-      <br>
-      par exemple :
-      <strong>ὁ ἱππος ου</strong>
-      </div>
-      `;
-
+    document.getElementById("feedback").innerHTML =
+      `<div class="wrong">
+        Écris : article + nominatif + terminaison du génitif
+      </div>`;
     return;
-
   }
-
 
   if (selectedDeclension === null) {
-
-    document
-      .getElementById("feedback")
-      .innerHTML =
-
-      `
-      <div class="wrong">
-      Choisis aussi la déclinaison :
-      1re, 2e ou 3e.
-      </div>
-      `;
-
+    document.getElementById("feedback").innerHTML =
+      `<div class="wrong">
+        Choisis 1re, 2e ou 3e déclinaison.
+      </div>`;
     return;
-
   }
 
-
   const articleOK =
-
-    normalizeGreek(user.article)
-    ===
-    normalizeGreek(current.article);
-
+    normalizeGreek(user.article) === normalizeGreek(current.article);
 
   const wordOK =
-
-    normalizeGreek(user.word)
-    ===
-    normalizeGreek(current.word);
-
+    normalizeGreek(user.word) === normalizeGreek(current.word);
 
   const genitiveOK =
-
-    normalizeGreek(user.genitive)
-    ===
-    normalizeGreek(current.genitive);
-
+    normalizeGreek(user.genitive) === normalizeGreek(current.genitive);
 
   const declensionOK =
-
-    selectedDeclension
-    ===
-    current.declension;
-
+    selectedDeclension === current.declension;
 
   attempts++;
-
   answered = true;
-
 
   let html = "";
 
-
   html += articleOK
-
     ? `<div class="correct">✓ Article</div>`
-
     : `<div class="wrong">✗ Article</div>`;
 
-
   html += wordOK
-
     ? `<div class="correct">✓ Nominatif</div>`
-
     : `<div class="wrong">✗ Nominatif</div>`;
 
-
   html += genitiveOK
-
     ? `<div class="correct">✓ Génitif</div>`
-
     : `<div class="wrong">✗ Génitif</div>`;
 
-
   html += declensionOK
+    ? `<div class="correct">✓ ${current.declension}e déclinaison</div>`
+    : `<div class="wrong">✗ Déclinaison</div>`;
 
-    ? `<div class="correct">
-       ✓ ${current.declension}e déclinaison
-       </div>`
-
-    : `<div class="wrong">
-       ✗ Déclinaison
-       </div>`;
-
-
-  const everythingOK =
-
-    articleOK &&
-    wordOK &&
-    genitiveOK &&
-    declensionOK;
-
-
-  if (everythingOK) {
-
+  if (articleOK && wordOK && genitiveOK && declensionOK) {
     score++;
-
     html =
-      `<div class="correct">
-      ✓ Bonne réponse !
-      </div><br>`
-      + html;
-
-  }
-
-  else {
-
-    html +=
-
-      `
+      `<div class="correct">✓ Bonne réponse !</div><br>` + html;
+  } else {
+    html += `
       <div class="correction">
-
-      Réponse attendue :
-
-      <br><br>
-
-      <strong>
-      ${current.article}
-      ${current.word}
-      ${current.genitive}
-      </strong>
-
-      <br><br>
-
-      Génitif complet :
-      <strong>
-      ${current.fullGenitive}
-      </strong>
-
-      <br>
-
-      Déclinaison :
-      <strong>
-      ${current.declension}e
-      </strong>
-
+        <strong>${current.article} ${current.word} ${current.genitive}</strong>
+        <br>
+        Génitif complet : <strong>${current.fullGenitive}</strong>
+        <br>
+        Déclinaison : <strong>${current.declension}e</strong>
       </div>
-      `;
-
+    `;
   }
 
-
-  document
-    .getElementById("feedback")
-    .innerHTML =
-    html;
-
-
+  document.getElementById("feedback").innerHTML = html;
   updateStats();
-
 }
 
-
-/* ===========================
-   MOT SUIVANT
-   =========================== */
-
 function nextWord() {
-
   let newIndex;
 
   do {
-
-    newIndex =
-      Math.floor(
-        Math.random()
-        *
-        lexicon.length
-      );
-
-  }
-
-  while (
-    newIndex === currentIndex
-    &&
+    newIndex = Math.floor(Math.random() * lexicon.length);
+  } while (
+    newIndex === currentIndex &&
     lexicon.length > 1
   );
 
-
-  currentIndex =
-    newIndex;
-
-
+  currentIndex = newIndex;
   showWord();
-
 }
-
-
-/* ===========================
-   SCORE
-   =========================== */
 
 function updateStats() {
+  const percentage =
+    attempts === 0
+      ? 0
+      : Math.round(score / attempts * 100);
 
-  let percentage = 0;
-
-  if (attempts > 0) {
-
-    percentage =
-      Math.round(
-        score
-        /
-        attempts
-        *
-        100
-      );
-
-  }
-
-
-  document
-    .getElementById("stats")
-    .textContent =
-
+  document.getElementById("stats").textContent =
     `Score : ${score}/${attempts} — ${percentage}%`;
-
 }
 
-
-/* touche Entrée */
-
-document
-  .getElementById("answer")
-  .addEventListener(
-    "keydown",
-    function(event) {
-
-      if (event.key === "Enter") {
-        checkAnswer();
-      }
-
+document.getElementById("answer")
+  .addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+      checkAnswer();
     }
-  );
-
+  });
 
 showWord();
 updateStats();
 
 </script>
-
 </body>
 </html>
