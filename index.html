@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mon grec ancien</title>
+  <title>Révision grec ancien</title>
 
   <style>
     body {
@@ -24,27 +24,27 @@
     }
 
     h1 {
-      font-size: 22px;
       margin-top: 0;
+      font-size: 24px;
     }
 
     .instruction {
       color: #666;
-      font-size: 14px;
-      line-height: 1.4;
+      font-size: 15px;
+      line-height: 1.5;
     }
 
     .question {
       margin: 35px 0 20px;
-      font-size: 32px;
+      font-size: 34px;
       font-weight: 700;
     }
 
     input {
       width: 100%;
       box-sizing: border-box;
-      padding: 15px;
-      font-size: 23px;
+      padding: 16px;
+      font-size: 24px;
       border-radius: 12px;
       border: 1px solid #bbb;
       margin-bottom: 14px;
@@ -59,7 +59,6 @@
       background: #007aff;
       color: white;
       margin-bottom: 10px;
-      cursor: pointer;
     }
 
     button.secondary {
@@ -84,11 +83,11 @@
     }
 
     .correction {
-      margin-top: 15px;
+      margin-top: 14px;
       padding: 15px;
       background: #f5f5f7;
       border-radius: 12px;
-      font-size: 21px;
+      font-size: 22px;
     }
 
     .stats {
@@ -108,8 +107,11 @@
   <h1>Grec ancien</h1>
 
   <div class="instruction">
-    Écris : article + mot grec + terminaison du génitif.<br>
-    Exemple : ἡ θάλασσα, ης
+    Écris : <strong>article + nominatif + terminaison du génitif</strong><br>
+    Exemple : <strong>ἡ θάλασσα ης</strong><br><br>
+
+    Les esprits sont obligatoires.<br>
+    Les accents ne sont pas pris en compte.
   </div>
 
   <div class="question" id="question"></div>
@@ -117,7 +119,7 @@
   <input
     id="answer"
     type="text"
-    placeholder="ἡ θάλασσα, ης"
+    placeholder="Réponse en grec"
     autocomplete="off"
     autocapitalize="none"
     spellcheck="false"
@@ -138,17 +140,10 @@
 <script>
 
 /*
-  NOTRE LEXIQUE
+  LEXIQUE DU CHAPITRE TEST
 
-  Pour chaque nom :
-  fr = traduction française
-  article = article grec
-  word = nominatif
-  genitive = terminaison du génitif
-
-  Pour le moment nous mettons seulement un mot test.
-  Nous remplirons ensuite automatiquement ce tableau
-  à partir de tes chapitres.
+  answerGenitive = terminaison que tu dois réciter.
+  fullGenitive = forme complète affichée dans la correction.
 */
 
 const lexicon = [
@@ -157,84 +152,152 @@ const lexicon = [
     fr: "la mer",
     article: "ἡ",
     word: "θάλασσα",
-    genitive: "ης"
+    answerGenitive: "ης",
+    fullGenitive: "θαλάσσης"
+  },
+
+  {
+    fr: "le cheval",
+    article: "ὁ",
+    word: "ἵππος",
+    answerGenitive: "ου",
+    fullGenitive: "ἵππου"
+  },
+
+  {
+    fr: "le lion",
+    article: "ὁ",
+    word: "λέων",
+    answerGenitive: "οντος",
+    fullGenitive: "λέοντος"
+  },
+
+  {
+    fr: "le loup",
+    article: "ὁ",
+    word: "λύκος",
+    answerGenitive: "ου",
+    fullGenitive: "λύκου"
+  },
+
+  {
+    fr: "le taureau",
+    article: "ὁ",
+    word: "ταῦρος",
+    answerGenitive: "ου",
+    fullGenitive: "ταύρου"
+  },
+
+  {
+    fr: "l'eau",
+    article: "τό",
+    word: "ὕδωρ",
+    answerGenitive: "ατος",
+    fullGenitive: "ὕδατος"
+  },
+
+  {
+    fr: "la ville",
+    article: "ἡ",
+    word: "πόλις",
+    answerGenitive: "εως",
+    fullGenitive: "πόλεως"
+  },
+
+  {
+    fr: "le cygne",
+    article: "ὁ",
+    word: "κύκνος",
+    answerGenitive: "ου",
+    fullGenitive: "κύκνου"
+  },
+
+  {
+    fr: "le chien",
+    article: "ὁ",
+    word: "κύων",
+    answerGenitive: "υνος",
+    fullGenitive: "κυνός"
   }
 
 ];
 
 
-let currentIndex = 0;
+let currentIndex = Math.floor(Math.random() * lexicon.length);
 let score = 0;
 let attempts = 0;
+let answered = false;
 
 
 /*
-  Ignore uniquement les esprits.
+  Supprime UNIQUEMENT les accents.
 
-  Les accents restent présents et sont donc contrôlés.
+  On conserve les esprits :
+  ἀ et ἁ restent différents.
+
+  Donc :
+  ἵππος = ἱππος pour l'application
+  mais
+  ἵππος ≠ ἰππος
 */
-function removeBreathingMarks(text) {
+function removeAccents(text) {
 
   return text
     .normalize("NFD")
 
-    // esprit doux
-    .replace(/\u0313/g, "")
+    // accent grave
+    .replace(/\u0300/g, "")
 
-    // esprit rude
-    .replace(/\u0314/g, "")
+    // accent aigu
+    .replace(/\u0301/g, "")
+
+    // circonflexe grec / périspomène
+    .replace(/\u0342/g, "")
+
+    // anciennes variantes Unicode d'accents grecs
+    .replace(/\u0340/g, "")
+    .replace(/\u0341/g, "")
 
     .normalize("NFC");
 }
 
 
-/*
-  Nettoyage général :
-  - espaces
-  - minuscules
-  - esprits ignorés
-*/
 function normalize(text) {
 
-  return removeBreathingMarks(text)
+  return removeAccents(text)
     .trim()
     .toLowerCase()
+    .replace(/[,.·;]/g, "")
     .replace(/\s+/g, " ");
 }
 
 
 /*
-  Analyse une réponse du type :
+  Format attendu :
 
-  ἡ θάλασσα, ης
+  ἡ θάλασσα ης
+
+  premier élément = article
+  dernier élément = génitif
+  tout ce qui est au milieu = nominatif
 */
 function parseAnswer(text) {
 
-  const parts = text.split(",");
+  const clean = text
+    .trim()
+    .replace(/[,.·;]/g, " ")
+    .replace(/\s+/g, " ");
 
-  if (parts.length < 2) {
+  const parts = clean.split(" ");
+
+  if (parts.length < 3) {
     return null;
   }
-
-  const firstPart = parts[0].trim();
-  const genitive = parts.slice(1).join(",").trim();
-
-  const words = firstPart.split(/\s+/);
-
-  if (words.length < 2) {
-    return null;
-  }
-
-  const article = words[0];
-
-  const word = words
-    .slice(1)
-    .join(" ");
 
   return {
-    article: article,
-    word: word,
-    genitive: genitive
+    article: parts[0],
+    word: parts.slice(1, -1).join(" "),
+    genitive: parts[parts.length - 1]
   };
 }
 
@@ -250,6 +313,8 @@ function showWord() {
 
   document.getElementById("feedback").innerHTML = "";
 
+  answered = false;
+
   updateStats();
 
   document.getElementById("answer").focus();
@@ -258,12 +323,17 @@ function showWord() {
 
 function checkAnswer() {
 
+  if (answered) {
+    return;
+  }
+
   const current = lexicon[currentIndex];
 
-  const rawAnswer =
+  const raw =
     document.getElementById("answer").value;
 
-  const user = parseAnswer(rawAnswer);
+  const user = parseAnswer(raw);
+
 
   if (!user) {
 
@@ -273,10 +343,10 @@ function checkAnswer() {
         Je n'arrive pas à lire la réponse.
       </div>
 
-      Écris-la sous cette forme :
+      Écris trois éléments séparés par des espaces :
 
       <div class="correction">
-        ἡ θάλασσα, ης
+        ἡ θάλασσα ης
       </div>
       `;
 
@@ -294,68 +364,48 @@ function checkAnswer() {
 
   const genitiveOK =
     normalize(user.genitive) ===
-    normalize(current.genitive);
+    normalize(current.answerGenitive);
 
 
   attempts++;
-
+  answered = true;
 
   let html = "";
 
 
   if (articleOK) {
-    html +=
-      `<div class="correct">✓ Article</div>`;
+    html += `<div class="correct">✓ Article</div>`;
   } else {
-    html +=
-      `<div class="wrong">
-        ✗ Article
-      </div>`;
+    html += `<div class="wrong">✗ Article</div>`;
   }
 
 
   if (wordOK) {
-    html +=
-      `<div class="correct">
-        ✓ Nominatif
-      </div>`;
+    html += `<div class="correct">✓ Nominatif</div>`;
   } else {
-    html +=
-      `<div class="wrong">
-        ✗ Nominatif
-      </div>`;
+    html += `<div class="wrong">✗ Nominatif</div>`;
   }
 
 
   if (genitiveOK) {
-    html +=
-      `<div class="correct">
-        ✓ Génitif
-      </div>`;
+    html += `<div class="correct">✓ Génitif</div>`;
   } else {
-    html +=
-      `<div class="wrong">
-        ✗ Génitif
-      </div>`;
+    html += `<div class="wrong">✗ Génitif</div>`;
   }
 
 
-  if (
-    articleOK &&
-    wordOK &&
-    genitiveOK
-  ) {
+  if (articleOK && wordOK && genitiveOK) {
 
     score++;
 
     html =
-      `
-      <div class="correct">
+      `<div class="correct">
         ✓ Bonne réponse !
-      </div>
-      ` + html;
+      </div><br>` + html;
 
-  } else {
+  }
+
+  else {
 
     html +=
       `
@@ -364,10 +414,15 @@ function checkAnswer() {
         Réponse attendue :<br>
 
         <strong>
-        ${current.article}
-        ${current.word},
-        ${current.genitive}
+          ${current.article}
+          ${current.word}
+          ${current.answerGenitive}
         </strong>
+
+        <br><br>
+
+        Génitif complet :
+        <strong>${current.fullGenitive}</strong>
 
       </div>
       `;
@@ -383,31 +438,22 @@ function checkAnswer() {
 
 function nextWord() {
 
-  /*
-    Pour l'instant il n'y a qu'un mot.
-    Dès que nous aurons plusieurs mots,
-    ce système les choisira au hasard.
-  */
+  let newIndex;
 
-  if (lexicon.length > 1) {
+  do {
 
-    let newIndex;
+    newIndex =
+      Math.floor(
+        Math.random() * lexicon.length
+      );
 
-    do {
-
-      newIndex =
-        Math.floor(
-          Math.random() * lexicon.length
-        );
-
-    }
-    while (
-      newIndex === currentIndex &&
-      lexicon.length > 1
-    );
-
-    currentIndex = newIndex;
   }
+  while (
+    newIndex === currentIndex &&
+    lexicon.length > 1
+  );
+
+  currentIndex = newIndex;
 
   showWord();
 }
@@ -415,14 +461,10 @@ function nextWord() {
 
 function updateStats() {
 
-  let percentage = 0;
-
-  if (attempts > 0) {
-    percentage =
-      Math.round(
-        (score / attempts) * 100
-      );
-  }
+  const percentage =
+    attempts === 0
+      ? 0
+      : Math.round((score / attempts) * 100);
 
   document.getElementById("stats").textContent =
     `Score : ${score}/${attempts} — ${percentage}%`;
@@ -430,7 +472,7 @@ function updateStats() {
 
 
 /*
-  Touche Entrée = Vérifier
+  Entrée = vérifier
 */
 document
   .getElementById("answer")
