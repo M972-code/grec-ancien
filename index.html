@@ -148,76 +148,67 @@ const lexicon = [
     fr: "la mer",
     article: "ἡ",
     word: "θάλασσα",
-    genitive: "ης",
-    fullGenitive: "θαλάσσης",
+    genitive: "θαλάσσης",
     declension: 1
   },
   {
     fr: "le cheval",
     article: "ὁ",
     word: "ἵππος",
-    genitive: "ου",
-    fullGenitive: "ἵππου",
+    genitive: "ἵππου",
     declension: 2
   },
   {
     fr: "le lion",
     article: "ὁ",
     word: "λέων",
-    genitive: "οντος",
-    fullGenitive: "λέοντος",
+    genitive: "λέοντος",
     declension: 3
   },
   {
     fr: "le loup",
     article: "ὁ",
     word: "λύκος",
-    genitive: "ου",
-    fullGenitive: "λύκου",
+    genitive: "λύκου",
     declension: 2
   },
   {
     fr: "le taureau",
     article: "ὁ",
     word: "ταῦρος",
-    genitive: "ου",
-    fullGenitive: "ταύρου",
+    genitive: "ταύρου",
     declension: 2
   },
   {
     fr: "l'eau",
     article: "τό",
     word: "ὕδωρ",
-    genitive: "ατος",
-    fullGenitive: "ὕδατος",
+    genitive: "ὕδατος",
     declension: 3
   },
   {
     fr: "la ville",
     article: "ἡ",
     word: "πόλις",
-    genitive: "εως",
-    fullGenitive: "πόλεως",
+    genitive: "πόλεως",
     declension: 3
   },
   {
     fr: "le cygne",
     article: "ὁ",
     word: "κύκνος",
-    genitive: "ου",
-    fullGenitive: "κύκνου",
+    genitive: "κύκνου",
     declension: 2
   },
   {
     fr: "le chien",
     article: "ὁ",
     word: "κύων",
-    genitive: "ος",
-    fullGenitive: "κυνός",
+    genitive: "κυνός",
     declension: 3
   }
 ];
-
+  
 let currentIndex = Math.floor(Math.random() * lexicon.length);
 let selectedDeclension = null;
 let score = 0;
@@ -346,9 +337,6 @@ function checkAnswer() {
     html += `
       <div class="correction">
         <strong>${current.article} ${current.word} ${current.genitive}</strong>
-        <br>
-        Génitif complet : <strong>${current.fullGenitive}</strong>
-        <br>
         Déclinaison : <strong>${current.declension}e</strong>
       </div>
     `;
