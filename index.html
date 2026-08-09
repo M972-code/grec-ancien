@@ -1,1742 +1,197 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
->
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Grec</title>
-
 <style>
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  margin: 0;
-  padding: 8px;
-  background: #f5f5f7;
-  color: #1d1d1f;
-}
-
-.app {
-  max-width: 520px;
-  margin: 0 auto;
-  background: white;
-  padding: 12px 16px;
-  border-radius: 18px;
-  box-shadow: 0 4px 18px rgba(0,0,0,.07);
-}
-
-.question {
-  margin: 4px 0 14px;
-  font-size: 30px;
-  font-weight: 700;
-}
-
-.category {
-  font-size: 13px;
-  color: #777;
-  margin-bottom: 5px;
-}
-
-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 13px;
-  font-size: 23px;
-  border-radius: 11px;
-  border: 1px solid #bbb;
-  margin-bottom: 10px;
-}
-
-.declensions {
-  display: flex;
-  gap: 7px;
-  margin-bottom: 10px;
-}
-
-.declensions button {
-  flex: 1;
-  background: #e5e5ea;
-  color: #111;
-  padding: 10px;
-}
-
-.declensions button.selected {
-  background: #007aff;
-  color: white;
-}
-
-button {
-  width: 100%;
-  border: none;
-  border-radius: 11px;
-  padding: 12px;
-  font-size: 17px;
-  margin-bottom: 8px;
-  background: #007aff;
-  color: white;
-}
-
-button.skip {
-  background: #e5e5ea;
-  color: #333;
-}
-
-.feedback {
-  margin-top: 10px;
-  line-height: 1.5;
-  font-size: 17px;
-}
-
-.correct {
-  color: #16803c;
-  font-weight: 600;
-}
-
-.wrong {
-  color: #b42318;
-  font-weight: 600;
-}
-
-.correction {
-  margin-top: 10px;
-  background: #f5f5f7;
-  border-radius: 10px;
-  padding: 11px;
-  font-size: 19px;
-}
-
-.stats {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid #eee;
-  color: #777;
-  font-size: 13px;
-}
-
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:8px;background:#f5f5f7;color:#1d1d1f}
+.app{max-width:520px;margin:0 auto;background:white;padding:10px 14px;border-radius:18px;box-shadow:0 4px 18px rgba(0,0,0,.07)}
+.top{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+select{font-size:13px;padding:6px;border-radius:8px;border:1px solid #ccc;background:white}
+.category{font-size:12px;color:#777;flex:1}
+.question{margin:4px 0 12px;font-size:30px;font-weight:700}
+input{width:100%;box-sizing:border-box;padding:12px;font-size:22px;border-radius:11px;border:1px solid #bbb;margin-bottom:9px}
+.declensions,.cases{display:flex;gap:7px;margin-bottom:9px}
+.declensions button,.cases button{flex:1;background:#e5e5ea;color:#111;padding:9px}
+.declensions button.selected,.cases button.selected{background:#007aff;color:white}
+button{width:100%;border:none;border-radius:11px;padding:11px;font-size:17px;margin-bottom:7px;background:#007aff;color:white}
+button.skip{background:#e5e5ea;color:#333}
+.feedback{margin-top:8px;line-height:1.45;font-size:16px}
+.correct{color:#16803c;font-weight:600} .wrong{color:#b42318;font-weight:600}
+.correction{margin-top:8px;background:#f5f5f7;border-radius:10px;padding:10px;font-size:18px}
+.stats{margin-top:8px;padding-top:7px;border-top:1px solid #eee;color:#777;font-size:12px}
 </style>
 </head>
-
-
 <body>
-
 <div class="app">
-
+<div class="top">
   <div id="category" class="category"></div>
-
-  <div id="question" class="question"></div>
-
-  <input
-    id="answer"
-    type="text"
-    placeholder="Réponse en grec"
-    autocomplete="off"
-    autocapitalize="none"
-    spellcheck="false"
-  >
-
-  <div id="declensions" class="declensions">
-
-    <button
-      id="decl1"
-      onclick="selectDeclension(1)">
-      1re
-    </button>
-
-    <button
-      id="decl2"
-      onclick="selectDeclension(2)">
-      2e
-    </button>
-
-    <button
-      id="decl3"
-      onclick="selectDeclension(3)">
-      3e
-    </button>
-
-  </div>
-
-  <button
-    id="mainButton"
-    onclick="mainAction()">
-    Vérifier
-  </button>
-
-  <button
-    id="skipButton"
-    class="skip"
-    onclick="skipWord()">
-    Je passe
-  </button>
-
-  <div
-    id="feedback"
-    class="feedback">
-  </div>
-
-  <div
-    id="stats"
-    class="stats">
-  </div>
-
+  <select id="chapterFilter" onchange="resetAndShow()">
+    <option value="ALL">Tous</option>
+    <option value="Α">Α</option><option value="Β">Β</option><option value="Γ">Γ</option><option value="Δ">Δ</option>
+    <option value="Ε">Ε</option><option value="Ζ">Ζ</option><option value="Θ">Θ</option><option value="Ι">Ι</option><option value="ΙΑ">ΙΑ</option>
+  </select>
 </div>
-
-
+<div id="question" class="question"></div>
+<input id="answer" type="text" placeholder="Réponse en grec" autocomplete="off" autocapitalize="none" spellcheck="false">
+<div id="declensions" class="declensions">
+<button id="decl1" onclick="selectDeclension(1)">1re</button>
+<button id="decl2" onclick="selectDeclension(2)">2e</button>
+<button id="decl3" onclick="selectDeclension(3)">3e</button>
+</div>
+<div id="cases" class="cases" style="display:none">
+<button id="casegen" onclick="toggleCase('gen')">+ gén.</button>
+<button id="casedat" onclick="toggleCase('dat')">+ dat.</button>
+<button id="caseacc" onclick="toggleCase('acc')">+ acc.</button>
+</div>
+<button id="mainButton" onclick="mainAction()">Vérifier</button>
+<button id="skipButton" class="skip" onclick="skipWord()">Je passe</button>
+<div id="feedback" class="feedback"></div>
+<div id="stats" class="stats"></div>
+</div>
 <script>
-
-/* =====================================================
-   LEXIQUE — CHAPITRE Δ
-   ===================================================== */
-
-const lexicon = [
-
-/* ---------- NOMS ---------- */
-
-{
- id:"haima",
- fr:"le sang",
- type:"noun",
- article:"τό",
- word:"αἷμα",
- genitive:"αἵματος",
- declension:3
-},
-
-{
- id:"alopex",
- fr:"le renard",
- type:"noun",
- article:"ἡ",
- word:"ἀλώπηξ",
- genitive:"ἀλώπεκος",
- declension:3
-},
-
-{
- id:"arachne",
- fr:"l'araignée",
- type:"noun",
- article:"ἡ",
- word:"ἀράχνη",
- genitive:"ἀράχνης",
- declension:1
-},
-
-{
- id:"harpyia",
- fr:"la harpie",
- type:"noun",
- article:"ἡ",
- word:"ἅρπυια",
- genitive:"ἁρπυίας",
- declension:1
-},
-
-{
- id:"batrachos",
- fr:"la grenouille",
- type:"noun",
- article:"ὁ",
- word:"βάτραχος",
- genitive:"βατράχου",
- declension:2
-},
-
-{
- id:"bios",
- fr:"la vie",
- type:"noun",
- article:"ὁ",
- word:"βίος",
- genitive:"βίου",
- declension:2
-},
-
-{
- id:"delphis",
- fr:"le dauphin",
- type:"noun",
- article:"ὁ",
- word:"δελφίς",
- genitive:"δελφῖνος",
- declension:3
-},
-
-{
- id:"drakaina",
- fr:"la dragonne",
- type:"noun",
- article:"ἡ",
- word:"δράκαινα",
- genitive:"δρακαίνης",
- declension:1
-},
-
-{
- id:"elaphos",
- fr:"le cerf",
- type:"noun",
- article:"ὁ",
- word:"ἔλαφος",
- genitive:"ἐλάφου",
- declension:2
-},
-
-{
- id:"elephas",
- fr:"l'éléphant",
- type:"noun",
- article:"ὁ",
- word:"ἐλέφας",
- genitive:"ἐλέφαντος",
- declension:3
-},
-
-{
- id:"zoon",
- fr:"l'animal",
- type:"noun",
- article:"τό",
- word:"ζῷον",
- genitive:"ζῴου",
- declension:2
-},
-
-{
- id:"thalassa",
- fr:"la mer",
- type:"noun",
- article:"ἡ",
- word:"θάλασσα",
- genitive:"θαλάσσης",
- declension:1
-},
-
-{
- id:"hippopotamos",
- fr:"l'hippopotame",
- type:"noun",
- article:"ὁ",
- word:"ἱπποπόταμος",
- genitive:"ἱπποποτάμου",
- declension:2
-},
-
-{
- id:"hippos",
- fr:"le cheval",
- type:"noun",
- article:"ὁ",
- word:"ἵππος",
- genitive:"ἵππου",
- declension:2
-},
-
-{
- id:"ichthys",
- fr:"le poisson",
- type:"noun",
- article:"ὁ",
- word:"ἰχθύς",
- genitive:"ἰχθύος",
- declension:3
-},
-
-{
- id:"karkinos",
- fr:"le crabe",
- type:"noun",
- article:"ὁ",
- word:"καρκίνος",
- genitive:"καρκίνου",
- declension:2
-},
-
-{
- id:"karcharias",
- fr:"le requin",
- type:"noun",
- article:"ὁ",
- word:"καρχαρίας",
- genitive:"καρχαρίου",
- declension:1
-},
-
-{
- id:"kategoroumenon",
- fr:"le prédicat",
- type:"noun",
- article:"τό",
- word:"κατηγορούμενον",
- genitive:"κατηγορουμένου",
- declension:2
-},
-
-{
- id:"kentauros",
- fr:"le centaure",
- type:"noun",
- article:"ὁ",
- word:"κένταυρος",
- genitive:"κενταύρου",
- declension:2
-},
-
-{
- id:"krokodeilos",
- fr:"le crocodile",
- type:"noun",
- article:"ὁ",
- word:"κροκόδειλος",
- genitive:"κροκοδείλου",
- declension:2
-},
-
-{
- id:"kyklops",
- fr:"le cyclope",
- type:"noun",
- article:"ὁ",
- word:"κύκλωψ",
- genitive:"κύκλωπος",
- declension:3
-},
-
-{
- id:"kyknos",
- fr:"le cygne",
- type:"noun",
- article:"ὁ",
- word:"κύκνος",
- genitive:"κύκνου",
- declension:2
-},
-
-{
- id:"kyon",
- fr:"le chien",
- type:"noun",
- article:"ὁ",
- word:"κύων",
- genitive:"κυνός",
- declension:3
-},
-
-{
- id:"leon",
- fr:"le lion",
- type:"noun",
- article:"ὁ",
- word:"λέων",
- genitive:"λέοντος",
- declension:3
-},
-
-{
- id:"limne",
- fr:"le lac",
- type:"noun",
- article:"ἡ",
- word:"λίμνη",
- genitive:"λίμνης",
- declension:1
-},
-
-{
- id:"lykos",
- fr:"le loup",
- type:"noun",
- article:"ὁ",
- word:"λύκος",
- genitive:"λύκου",
- declension:2
-},
-
-{
- id:"melissa",
- fr:"l'abeille",
- type:"noun",
- article:"ἡ",
- word:"μέλισσα",
- genitive:"μελίσσης",
- declension:1
-},
-
-{
- id:"mythos",
- fr:"le mythe",
- type:"noun",
- article:"ὁ",
- word:"μῦθος",
- genitive:"μύθου",
- declension:2
-},
-
-{
- id:"onos",
- fr:"l'âne",
- type:"noun",
- article:"ὁ",
- word:"ὄνος",
- genitive:"ὄνου",
- declension:2
-},
-
-{
- id:"ornis",
- fr:"l'oiseau",
- type:"noun",
- article:"ἡ",
- word:"ὄρνις",
- genitive:"ὄρνιθος",
- declension:3
-},
-
-{
- id:"ophis",
- fr:"le serpent",
- type:"noun",
- article:"ὁ",
- word:"ὄφις",
- genitive:"ὄφεως",
- declension:3
-},
-
-{
- id:"paradeigma",
- fr:"l'exemple",
- type:"noun",
- article:"τό",
- word:"παράδειγμα",
- genitive:"παραδείγματος",
- declension:3
-},
-
-{
- id:"polis",
- fr:"la ville",
- type:"noun",
- article:"ἡ",
- word:"πόλις",
- genitive:"πόλεως",
- declension:3
-},
-
-{
- id:"potamos",
- fr:"le fleuve",
- type:"noun",
- article:"ὁ",
- word:"ποταμός",
- genitive:"ποταμοῦ",
- declension:2
-},
-
-{
- id:"pous",
- fr:"le pied",
- type:"noun",
- article:"ὁ",
- word:"πούς",
- genitive:"ποδός",
- declension:3
-},
-
-{
- id:"probaton",
- fr:"le mouton",
- type:"noun",
- article:"τό",
- word:"πρόβατον",
- genitive:"προβάτου",
- declension:2
-},
-
-{
- id:"ptosis",
- fr:"le cas grammatical",
- type:"noun",
- article:"ἡ",
- word:"πτῶσις",
- genitive:"πτώσεως",
- declension:3
-},
-
-{
- id:"rhema",
- fr:"le verbe",
- type:"noun",
- article:"τό",
- word:"ῥῆμα",
- genitive:"ῥήματος",
- declension:3
-},
-
-{
- id:"sauros",
- fr:"le lézard",
- type:"noun",
- article:"ὁ",
- word:"σαῦρος",
- genitive:"σαύρου",
- declension:2
-},
-
-{
- id:"seiren",
- fr:"la sirène",
- type:"noun",
- article:"ἡ",
- word:"σειρήν",
- genitive:"σειρῆνος",
- declension:3
-},
-
-{
- id:"tauros",
- fr:"le taureau",
- type:"noun",
- article:"ὁ",
- word:"ταῦρος",
- genitive:"ταύρου",
- declension:2
-},
-
-{
- id:"tigris",
- fr:"le tigre",
- type:"noun",
- article:"ὁ",
- word:"τίγρις",
- genitive:"τίγριδος",
- declension:3
-},
-
-{
- id:"hydor",
- fr:"l'eau",
- type:"noun",
- article:"τό",
- word:"ὕδωρ",
- genitive:"ὕδατος",
- declension:3
-},
-
-{
- id:"hypokeimenon",
- fr:"le sujet grammatical",
- type:"noun",
- article:"τό",
- word:"ὑποκείμενον",
- genitive:"ὑποκειμένου",
- declension:2
-},
-
-{
- id:"phalaina",
- fr:"la baleine",
- type:"noun",
- article:"ἡ",
- word:"φάλαινα",
- genitive:"φάλαινας",
- declension:1
-},
-
-{
- id:"chelone",
- fr:"la tortue",
- type:"noun",
- article:"ἡ",
- word:"χελώνη",
- genitive:"χελώνης",
- declension:1
-},
-
-
-/* ---------- ADJECTIFS ---------- */
-
-{
- id:"agrios",
- fr:"sauvage",
- type:"adjective",
- answer:"ἄγριος α ον"
-},
-
-{
- id:"amphibios",
- fr:"amphibie",
- type:"adjective",
- answer:"ἀμφίβιος ον"
-},
-
-{
- id:"anaimos",
- fr:"exsangue / sans sang",
- type:"adjective",
- answer:"ἄναιμος ον"
-},
-
-{
- id:"anthropomorphos",
- fr:"anthropomorphe",
- type:"adjective",
- answer:"ἀνθρωπόμορφος ον"
-},
-
-{
- id:"apous",
- fr:"sans pieds",
- type:"adjective",
- answer:"ἄπους ουν"
-},
-
-{
- id:"dipous",
- fr:"bipède",
- type:"adjective",
- answer:"δίπους ουν"
-},
-
-{
- id:"enaimos",
- fr:"pourvu de sang",
- type:"adjective",
- answer:"ἔναιμος ον"
-},
-
-{
- id:"enydros",
- fr:"aquatique",
- type:"adjective",
- answer:"ἔνυδρος ον"
-},
-
-{
- id:"herpystikos",
- fr:"rampant / reptilien",
- type:"adjective",
- answer:"ἑρπυστικός ή όν"
-},
-
-{
- id:"hemeros",
- fr:"domestique / apprivoisé",
- type:"adjective",
- answer:"ἥμερος α ον"
-},
-
-{
- id:"hemisys",
- fr:"demi / moitié",
- type:"adjective",
- answer:"ἥμισυς ἡμίσεια ἥμισυ"
-},
-
-{
- id:"thalassios",
- fr:"marin",
- type:"adjective",
- answer:"θαλάσσιος α ον"
-},
-
-{
- id:"limnaios",
- fr:"lacustre",
- type:"adjective",
- answer:"λιμναῖος α ον"
-},
-
-{
- id:"mythikos",
- fr:"mythique",
- type:"adjective",
- answer:"μυθικός ή όν"
-},
-
-{
- id:"oligos",
- fr:"peu nombreux / peu",
- type:"adjective",
- answer:"ὀλίγος η ον"
-},
-
-{
- id:"onomastikos",
- fr:"nominatif",
- type:"adjective",
- answer:"ὀνομαστικός ή όν"
-},
-
-{
- id:"pezos",
- fr:"terrestre / allant à pied",
- type:"adjective",
- answer:"πεζός ή όν"
-},
-
-{
- id:"politikos",
- fr:"politique",
- type:"adjective",
- answer:"πολιτικός ή όν"
-},
-
-{
- id:"polypous",
- fr:"qui a beaucoup de pieds",
- type:"adjective",
- answer:"πολύπους ουν"
-},
-
-{
- id:"polys",
- fr:"nombreux / beaucoup",
- type:"adjective",
- answer:"πολύς πολλή πολύ"
-},
-
-{
- id:"potamios",
- fr:"fluvial",
- type:"adjective",
- answer:"ποτάμιος α ον"
-},
-
-{
- id:"ptenos",
- fr:"ailé / volant",
- type:"adjective",
- answer:"πτηνός ή όν"
-},
-
-{
- id:"tetrapous",
- fr:"quadrupède",
- type:"adjective",
- answer:"τετράπους ουν"
-},
-
-{
- id:"chersaios",
- fr:"terrestre",
- type:"adjective",
- answer:"χερσαῖος α ον"
-},
-
-
-/* ---------- VERBES ---------- */
-
-{
- id:"badizo",
- fr:"marcher",
- type:"verb",
- answer:"βαδίζω"
-},
-
-{
- id:"herpo",
- fr:"ramper",
- type:"verb",
- answer:"ἕρπω"
-},
-
-{
- id:"kolymbao",
- fr:"nager",
- type:"verb",
- answer:"κολυμβάω"
-},
-
-{
- id:"lego",
- fr:"dire",
- type:"verb",
- answer:"λέγω"
-},
-
-{
- id:"petomai",
- fr:"voler",
- type:"verb",
- answer:"πέτομαι"
-},
-
-{
- id:"pedao",
- fr:"sauter",
- type:"verb",
- answer:"πηδάω"
-},
-
-{
- id:"poieo",
- fr:"faire",
- type:"verb",
- answer:"ποιέω"
-},
-
-{
- id:"trecho",
- fr:"courir",
- type:"verb",
- answer:"τρέχω"
-},
-
-
-/* ---------- ADVERBES ---------- */
-
-{
- id:"eti",
- fr:"encore",
- type:"adverb",
- answer:"ἔτι"
-},
-
-{
- id:"monon",
- fr:"seulement",
- type:"adverb",
- answer:"μόνον"
-},
-
-
-/* ---------- CONJONCTIONS ---------- */
-
-{
- id:"eite",
- fr:"soit... soit / ou... ou",
- type:"conjunction",
- answer:"εἴτε εἴτε"
-},
-
-{
- id:"hosper",
- fr:"comme / de même que",
- type:"conjunction",
- answer:"ὥσπερ"
-},
-
-
-/* ---------- NOMS PROPRES : FAIBLE FRÉQUENCE ---------- */
-
-{
- id:"aristoteles",
- fr:"Aristote",
- type:"proper",
- article:"ὁ",
- word:"Ἀριστοτέλης",
- genitive:"Ἀριστοτέλους",
- declension:3
-},
-
-{
- id:"parthenope",
- fr:"Parthénope",
- type:"proper",
- article:"ἡ",
- word:"Παρθενόπη",
- genitive:"Παρθενόπης",
- declension:1
-},
-
-{
- id:"sphinx",
- fr:"le Sphinx",
- type:"proper",
- article:"ἡ",
- word:"Σφίγξ",
- genitive:"Σφιγγός",
- declension:3
+const lexicon=[{"chapter":"Α","id":"estin","fr":"être (il/elle est ; ils/elles sont)","type":"verb","answer":"ἐστίν εἰσίν"},{"chapter":"Α","id":"anthropos","fr":"l'être humain","type":"noun","article":"ὁ/ἡ","word":"ἄνθρωπος","genitive":"ἀνθρώπου","declension":2},{"chapter":"Α","id":"arthron","fr":"l'article grammatical","type":"noun","article":"τό","word":"ἄρθρον","genitive":"ἄρθρου","declension":2},{"chapter":"Α","id":"arithmos","fr":"le nombre","type":"noun","article":"ὁ","word":"ἀριθμός","genitive":"ἀριθμοῦ","declension":2},{"chapter":"Α","id":"basileia","fr":"la reine","type":"noun","article":"ἡ","word":"βασίλεια","genitive":"βασιλείας","declension":1},{"chapter":"Α","id":"grammatike","fr":"la grammaire","type":"noun","article":"ἡ","word":"γραμματική","genitive":"γραμματικῆς","declension":1},{"chapter":"Α","id":"thea","fr":"la déesse","type":"noun","article":"ἡ","word":"θεά","genitive":"θεᾶς","declension":1},{"chapter":"Α","id":"theos","fr":"le dieu","type":"noun","article":"ὁ","word":"θεός","genitive":"θεοῦ","declension":2},{"chapter":"Α","id":"therion","fr":"la bête","type":"noun","article":"τό","word":"θηρίον","genitive":"θηρίου","declension":2},{"chapter":"Α","id":"hiereia","fr":"la prêtresse","type":"noun","article":"ἡ","word":"ἱέρεια","genitive":"ἱερείας","declension":1},{"chapter":"Α","id":"kephalaion","fr":"le chapitre","type":"noun","article":"τό","word":"κεφάλαιον","genitive":"κεφαλαίου","declension":2},{"chapter":"Α","id":"mathematikos","fr":"le mathématicien","type":"noun","article":"ὁ","word":"μαθηματικός","genitive":"μαθηματικοῦ","declension":2},{"chapter":"Α","id":"meletema","fr":"l'exercice / étude","type":"noun","article":"τό","word":"μελέτημα","genitive":"μελετήματος","declension":3},{"chapter":"Α","id":"mousikos","fr":"le musicien","type":"noun","article":"ὁ","word":"μουσικός","genitive":"μουσικοῦ","declension":2},{"chapter":"Α","id":"poietria","fr":"la poétesse","type":"noun","article":"ἡ","word":"ποιήτρια","genitive":"ποιητρίας","declension":1},{"chapter":"Α","id":"philosophos","fr":"le philosophe","type":"noun","article":"ὁ","word":"φιλόσοφος","genitive":"φιλοσόφου","declension":2},{"chapter":"Α","id":"hellenikos","fr":"grec","type":"adjective","answer":"Ἑλληνικός ή όν"},{"chapter":"Α","id":"enikos","fr":"singulier","type":"adjective","answer":"ἑνικός ή όν"},{"chapter":"Α","id":"plethyntikos","fr":"pluriel","type":"adjective","answer":"πληθυντικός ή όν"},{"chapter":"Α","id":"rhomaikos","fr":"romain","type":"adjective","answer":"Ῥωμαϊκός ή όν"},{"chapter":"Α","id":"ara","fr":"donc ? / alors ?","type":"adverb","answer":"ἆρα"},{"chapter":"Α","id":"nai","fr":"oui","type":"adverb","answer":"ναί"},{"chapter":"Α","id":"ou","fr":"non / ne... pas","type":"adverb","answer":"οὐ οὐκ οὐχ"},{"chapter":"Α","id":"oudamos","fr":"nullement","type":"adverb","answer":"οὐδαμῶς"},{"chapter":"Α","id":"ho_he","fr":"le / la","type":"article","answer":"ὁ ἡ"},{"chapter":"Α","id":"alla","fr":"mais","type":"conjunction","answer":"ἀλλά"},{"chapter":"Α","id":"kai","fr":"et","type":"conjunction","answer":"καί"},{"chapter":"Α","id":"athena","fr":"Athéna","type":"proper","answer":"ἡ Ἀθηνᾶ"},{"chapter":"Α","id":"apollonA","fr":"Apollon","type":"proper","answer":"ὁ Ἀπόλλων"},{"chapter":"Α","id":"ares","fr":"Arès","type":"proper","answer":"ὁ Ἄρης"},{"chapter":"Α","id":"artemis","fr":"Artémis","type":"proper","answer":"ἡ Ἄρτεμις"},{"chapter":"Α","id":"asterion","fr":"Astérion","type":"proper","answer":"ὁ Ἀστερίων"},{"chapter":"Α","id":"aphrodite","fr":"Aphrodite","type":"proper","answer":"ἡ Ἀφροδίτη"},{"chapter":"Α","id":"demeter","fr":"Déméter","type":"proper","answer":"ἡ Δημήτηρ"},{"chapter":"Α","id":"dionysos","fr":"Dionysos","type":"proper","answer":"ὁ Διόνυσος"},{"chapter":"Α","id":"diotima","fr":"Diotime","type":"proper","answer":"ἡ Διοτίμα"},{"chapter":"Α","id":"hermes","fr":"Hermès","type":"proper","answer":"ὁ Ἑρμῆς"},{"chapter":"Α","id":"hephaistos","fr":"Héphaïstos","type":"proper","answer":"ὁ Ἥφαιστος"},{"chapter":"Α","id":"zeus","fr":"Zeus","type":"proper","answer":"ὁ Ζεύς"},{"chapter":"Α","id":"hera","fr":"Héra","type":"proper","answer":"ἡ Ἥρα"},{"chapter":"Α","id":"kerberos","fr":"Cerbère","type":"proper","answer":"ὁ Κέρβερος"},{"chapter":"Α","id":"kleopatra","fr":"Cléopâtre","type":"proper","answer":"ἡ Κλεοπάτρα"},{"chapter":"Α","id":"korinna","fr":"Corinne","type":"proper","answer":"ἡ Κόριννα"},{"chapter":"Α","id":"medousa","fr":"Méduse","type":"proper","answer":"ἡ Μέδουσα"},{"chapter":"Α","id":"orpheus","fr":"Orphée","type":"proper","answer":"ὁ Ὀρφεύς"},{"chapter":"Α","id":"persephone","fr":"Perséphone","type":"proper","answer":"ἡ Περσεφόνη"},{"chapter":"Α","id":"pegasos","fr":"Pégase","type":"proper","answer":"ὁ Πήγασος"},{"chapter":"Α","id":"platon","fr":"Platon","type":"proper","answer":"ὁ Πλάτων"},{"chapter":"Α","id":"podarge","fr":"Podarge","type":"proper","answer":"ἡ Ποδάργη"},{"chapter":"Α","id":"polyphemos","fr":"Polyphème","type":"proper","answer":"ὁ Πολύφημος"},{"chapter":"Α","id":"pythagoras","fr":"Pythagore","type":"proper","answer":"ὁ Πυθαγόρας"},{"chapter":"Α","id":"hydra","fr":"l'Hydre","type":"proper","answer":"ἡ Ὕδρα"},{"chapter":"Α","id":"cheiron","fr":"Chiron","type":"proper","answer":"ὁ Χείρων"},{"chapter":"Α","id":"chimaira","fr":"la Chimère","type":"proper","answer":"ἡ Χίμαιρα"},{"chapter":"Β","id":"aner","fr":"l'homme","type":"noun","article":"ὁ","word":"ἀνήρ","genitive":"ἀνδρός","declension":3},{"chapter":"Β","id":"genos","fr":"le genre / la race","type":"noun","article":"τό","word":"γένος","genitive":"γένους","declension":3},{"chapter":"Β","id":"gyne","fr":"la femme","type":"noun","article":"ἡ","word":"γυνή","genitive":"γυναικός","declension":3},{"chapter":"Β","id":"kore","fr":"la jeune fille","type":"noun","article":"ἡ","word":"κόρη","genitive":"κόρης","declension":1},{"chapter":"Β","id":"neanias","fr":"le jeune homme","type":"noun","article":"ὁ","word":"νεανίας","genitive":"νεανίου","declension":1},{"chapter":"Β","id":"pais","fr":"l'enfant","type":"noun","article":"ὁ/ἡ","word":"παῖς","genitive":"παιδός","declension":3},{"chapter":"Β","id":"paidion","fr":"le petit enfant","type":"noun","article":"τό","word":"παιδίον","genitive":"παιδίου","declension":2},{"chapter":"Β","id":"athanatos","fr":"immortel","type":"adjective","answer":"ἀθάνατος ον"},{"chapter":"Β","id":"arsenikos","fr":"masculin","type":"adjective","answer":"ἀρσενικός ή όν"},{"chapter":"Β","id":"thelykos","fr":"féminin","type":"adjective","answer":"θηλυκός ή όν"},{"chapter":"Β","id":"thnetos","fr":"mortel","type":"adjective","answer":"θνητός ή όν"},{"chapter":"Β","id":"kakos","fr":"mauvais","type":"adjective","answer":"κακός ή όν"},{"chapter":"Β","id":"kalos","fr":"beau / bon","type":"adjective","answer":"καλός ή όν"},{"chapter":"Β","id":"oudeteros","fr":"neutre","type":"adjective","answer":"οὐδέτερος τέρα τερον"},{"chapter":"Β","id":"article_sg","fr":"le / la / le neutre","type":"article","answer":"ὁ ἡ τό"},{"chapter":"Β","id":"article_pl","fr":"les","type":"article","answer":"οἱ αἱ τά"},{"chapter":"Β","id":"duo","fr":"deux","type":"number","answer":"δύο"},{"chapter":"Β","id":"treis","fr":"trois","type":"number","answer":"τρεῖς"},{"chapter":"Β","id":"gar","fr":"car","type":"conjunction","answer":"γάρ"},{"chapter":"Β","id":"e_or","fr":"ou","type":"conjunction","answer":"ἤ"},{"chapter":"Β","id":"oute","fr":"ni... ni","type":"conjunction","answer":"οὔτε οὔτε"},{"chapter":"Β","id":"oun","fr":"donc","type":"particle","answer":"οὖν"},{"chapter":"Β","id":"apollodoros","fr":"Apollodore","type":"proper","answer":"ὁ Ἀπολλόδωρος"},{"chapter":"Β","id":"apollonios","fr":"Apollonios","type":"proper","answer":"ὁ Ἀπολλώνιος"},{"chapter":"Β","id":"helene","fr":"Hélène","type":"proper","answer":"ἡ Ἑλένη"},{"chapter":"Β","id":"elektra","fr":"Électre","type":"proper","answer":"ἡ Ἠλέκτρα"},{"chapter":"Β","id":"kallimachos","fr":"Callimaque","type":"proper","answer":"ὁ Καλλίμαχος"},{"chapter":"Β","id":"kallirhoe","fr":"Callirhoé","type":"proper","answer":"ἡ Καλλιρρόη"},{"chapter":"Β","id":"kassandra","fr":"Cassandre","type":"proper","answer":"ἡ Κασσάνδρα"},{"chapter":"Β","id":"patroklos","fr":"Patrocle","type":"proper","answer":"ὁ Πάτροκλος"},{"chapter":"Β","id":"hypatia","fr":"Hypatie","type":"proper","answer":"ἡ Ὑπατία"},{"chapter":"Β","id":"philippos","fr":"Philippe","type":"proper","answer":"ὁ Φίλιππος"},{"chapter":"Γ","id":"deka","fr":"dix","type":"number","answer":"δέκα"},{"chapter":"Γ","id":"heis","fr":"un / une","type":"number","answer":"εἷς μία ἕν"},{"chapter":"Γ","id":"hekaton","fr":"cent","type":"number","answer":"ἑκατόν"},{"chapter":"Γ","id":"ennea","fr":"neuf","type":"number","answer":"ἐννέα"},{"chapter":"Γ","id":"hex","fr":"six","type":"number","answer":"ἕξ"},{"chapter":"Γ","id":"hepta","fr":"sept","type":"number","answer":"ἑπτά"},{"chapter":"Γ","id":"okto","fr":"huit","type":"number","answer":"ὀκτώ"},{"chapter":"Γ","id":"pente","fr":"cinq","type":"number","answer":"πέντε"},{"chapter":"Γ","id":"tessares","fr":"quatre","type":"number","answer":"τέσσαρες τέσσαρα"},{"chapter":"Γ","id":"treis_g","fr":"trois","type":"number","answer":"τρεῖς τρία"},{"chapter":"Γ","id":"ti","fr":"quoi ?","type":"pronoun","answer":"τί"},{"chapter":"Γ","id":"akouo","fr":"écouter / entendre","type":"verb","answer":"ἀκούω"},{"chapter":"Γ","id":"chaire","fr":"salut ! / réjouis-toi !","type":"interjection","answer":"χαῖρε"},{"chapter":"Γ","id":"glossa","fr":"la langue","type":"noun","article":"ἡ","word":"γλῶσσα","genitive":"γλώσσης","declension":1},{"chapter":"Γ","id":"gramma","fr":"la lettre","type":"noun","article":"τό","word":"γράμμα","genitive":"γράμματος","declension":3},{"chapter":"Γ","id":"diphthongos","fr":"la diphtongue","type":"noun","article":"ἡ","word":"δίφθογγος","genitive":"διφθόγγου","declension":2},{"chapter":"Γ","id":"klisis","fr":"la déclinaison","type":"noun","article":"ἡ","word":"κλίσις","genitive":"κλίσεως","declension":3},{"chapter":"Γ","id":"lexis","fr":"le mot","type":"noun","article":"ἡ","word":"λέξις","genitive":"λέξεως","declension":3},{"chapter":"Γ","id":"onoma","fr":"le nom","type":"noun","article":"τό","word":"ὄνομα","genitive":"ὀνόματος","declension":3},{"chapter":"Γ","id":"symphonon","fr":"la consonne","type":"noun","article":"τό","word":"σύμφωνον","genitive":"συμφώνου","declension":2},{"chapter":"Γ","id":"phoneen","fr":"la voyelle","type":"noun","article":"τό","word":"φωνῆεν","genitive":"φωνήεντος","declension":3},{"chapter":"Γ","id":"deuteros","fr":"deuxième","type":"adjective","answer":"δεύτερος τέρα τερον"},{"chapter":"Γ","id":"kephalaios","fr":"principal / capital","type":"adjective","answer":"κεφαλαῖος α ον"},{"chapter":"Γ","id":"kyrios","fr":"principal / propre","type":"adjective","answer":"κύριος α ον"},{"chapter":"Γ","id":"latinikos","fr":"latin","type":"adjective","answer":"Λατινικός ή όν"},{"chapter":"Γ","id":"megas","fr":"grand","type":"adjective","answer":"μέγας μεγάλη μέγα"},{"chapter":"Γ","id":"mikros","fr":"petit","type":"adjective","answer":"μικρός ά όν"},{"chapter":"Γ","id":"protos","fr":"premier","type":"adjective","answer":"πρῶτος η ον"},{"chapter":"Γ","id":"teleutaios","fr":"dernier","type":"adjective","answer":"τελευταῖος α ον"},{"chapter":"Γ","id":"tritos","fr":"troisième","type":"adjective","answer":"τρίτος η ον"},{"chapter":"Δ","id":"haima","fr":"le sang","type":"noun","article":"τό","word":"αἷμα","genitive":"αἵματος","declension":3},{"chapter":"Δ","id":"alopex","fr":"le renard","type":"noun","article":"ἡ","word":"ἀλώπηξ","genitive":"ἀλώπεκος","declension":3},{"chapter":"Δ","id":"arachne","fr":"l'araignée","type":"noun","article":"ἡ","word":"ἀράχνη","genitive":"ἀράχνης","declension":1},{"chapter":"Δ","id":"harpyia","fr":"la harpie","type":"noun","article":"ἡ","word":"ἅρπυια","genitive":"ἁρπυίας","declension":1},{"chapter":"Δ","id":"batrachos","fr":"la grenouille","type":"noun","article":"ὁ","word":"βάτραχος","genitive":"βατράχου","declension":2},{"chapter":"Δ","id":"bios","fr":"la vie","type":"noun","article":"ὁ","word":"βίος","genitive":"βίου","declension":2},{"chapter":"Δ","id":"delphis","fr":"le dauphin","type":"noun","article":"ὁ","word":"δελφίς","genitive":"δελφῖνος","declension":3},{"chapter":"Δ","id":"drakaina","fr":"la dragonne","type":"noun","article":"ἡ","word":"δράκαινα","genitive":"δρακαίνης","declension":1},{"chapter":"Δ","id":"elaphos","fr":"le cerf","type":"noun","article":"ὁ","word":"ἔλαφος","genitive":"ἐλάφου","declension":2},{"chapter":"Δ","id":"elephas","fr":"l'éléphant","type":"noun","article":"ὁ","word":"ἐλέφας","genitive":"ἐλέφαντος","declension":3},{"chapter":"Δ","id":"zoon","fr":"l'animal","type":"noun","article":"τό","word":"ζῷον","genitive":"ζῴου","declension":2},{"chapter":"Δ","id":"thalassa","fr":"la mer","type":"noun","article":"ἡ","word":"θάλασσα","genitive":"θαλάσσης","declension":1},{"chapter":"Δ","id":"hippopotamos","fr":"l'hippopotame","type":"noun","article":"ὁ","word":"ἱπποπόταμος","genitive":"ἱπποποτάμου","declension":2},{"chapter":"Δ","id":"hippos","fr":"le cheval","type":"noun","article":"ὁ","word":"ἵππος","genitive":"ἵππου","declension":2},{"chapter":"Δ","id":"ichthys","fr":"le poisson","type":"noun","article":"ὁ","word":"ἰχθύς","genitive":"ἰχθύος","declension":3},{"chapter":"Δ","id":"karkinos","fr":"le crabe","type":"noun","article":"ὁ","word":"καρκίνος","genitive":"καρκίνου","declension":2},{"chapter":"Δ","id":"karcharias","fr":"le requin","type":"noun","article":"ὁ","word":"καρχαρίας","genitive":"καρχαρίου","declension":1},{"chapter":"Δ","id":"kentauros","fr":"le centaure","type":"noun","article":"ὁ","word":"κένταυρος","genitive":"κενταύρου","declension":2},{"chapter":"Δ","id":"krokodeilos","fr":"le crocodile","type":"noun","article":"ὁ","word":"κροκόδειλος","genitive":"κροκοδείλου","declension":2},{"chapter":"Δ","id":"kyklops","fr":"le cyclope","type":"noun","article":"ὁ","word":"κύκλωψ","genitive":"κύκλωπος","declension":3},{"chapter":"Δ","id":"kyknos","fr":"le cygne","type":"noun","article":"ὁ","word":"κύκνος","genitive":"κύκνου","declension":2},{"chapter":"Δ","id":"kyon","fr":"le chien","type":"noun","article":"ὁ","word":"κύων","genitive":"κυνός","declension":3},{"chapter":"Δ","id":"leon","fr":"le lion","type":"noun","article":"ὁ","word":"λέων","genitive":"λέοντος","declension":3},{"chapter":"Δ","id":"limne","fr":"le lac","type":"noun","article":"ἡ","word":"λίμνη","genitive":"λίμνης","declension":1},{"chapter":"Δ","id":"lykos","fr":"le loup","type":"noun","article":"ὁ","word":"λύκος","genitive":"λύκου","declension":2},{"chapter":"Δ","id":"melissa","fr":"l'abeille","type":"noun","article":"ἡ","word":"μέλισσα","genitive":"μελίσσης","declension":1},{"chapter":"Δ","id":"mythos","fr":"le mythe","type":"noun","article":"ὁ","word":"μῦθος","genitive":"μύθου","declension":2},{"chapter":"Δ","id":"onos","fr":"l'âne","type":"noun","article":"ὁ","word":"ὄνος","genitive":"ὄνου","declension":2},{"chapter":"Δ","id":"ornis","fr":"l'oiseau","type":"noun","article":"ἡ","word":"ὄρνις","genitive":"ὄρνιθος","declension":3},{"chapter":"Δ","id":"ophis","fr":"le serpent","type":"noun","article":"ὁ","word":"ὄφις","genitive":"ὄφεως","declension":3},{"chapter":"Δ","id":"paradeigma","fr":"l'exemple","type":"noun","article":"τό","word":"παράδειγμα","genitive":"παραδείγματος","declension":3},{"chapter":"Δ","id":"polis","fr":"la ville","type":"noun","article":"ἡ","word":"πόλις","genitive":"πόλεως","declension":3},{"chapter":"Δ","id":"potamos","fr":"le fleuve","type":"noun","article":"ὁ","word":"ποταμός","genitive":"ποταμοῦ","declension":2},{"chapter":"Δ","id":"pous","fr":"le pied","type":"noun","article":"ὁ","word":"πούς","genitive":"ποδός","declension":3},{"chapter":"Δ","id":"probaton","fr":"le mouton","type":"noun","article":"τό","word":"πρόβατον","genitive":"προβάτου","declension":2},{"chapter":"Δ","id":"ptosis","fr":"le cas grammatical","type":"noun","article":"ἡ","word":"πτῶσις","genitive":"πτώσεως","declension":3},{"chapter":"Δ","id":"rhema","fr":"le verbe","type":"noun","article":"τό","word":"ῥῆμα","genitive":"ῥήματος","declension":3},{"chapter":"Δ","id":"sauros","fr":"le lézard","type":"noun","article":"ὁ","word":"σαῦρος","genitive":"σαύρου","declension":2},{"chapter":"Δ","id":"seiren","fr":"la sirène","type":"noun","article":"ἡ","word":"σειρήν","genitive":"σειρῆνος","declension":3},{"chapter":"Δ","id":"tauros","fr":"le taureau","type":"noun","article":"ὁ","word":"ταῦρος","genitive":"ταύρου","declension":2},{"chapter":"Δ","id":"tigris","fr":"le tigre","type":"noun","article":"ὁ","word":"τίγρις","genitive":"τίγριδος","declension":3},{"chapter":"Δ","id":"hydor","fr":"l'eau","type":"noun","article":"τό","word":"ὕδωρ","genitive":"ὕδατος","declension":3},{"chapter":"Δ","id":"phalaina","fr":"la baleine","type":"noun","article":"ἡ","word":"φάλαινα","genitive":"φάλαινας","declension":1},{"chapter":"Δ","id":"chelone","fr":"la tortue","type":"noun","article":"ἡ","word":"χελώνη","genitive":"χελώνης","declension":1},{"chapter":"Δ","id":"badizo","fr":"marcher","type":"verb","answer":"βαδίζω"},{"chapter":"Δ","id":"herpo","fr":"ramper","type":"verb","answer":"ἕρπω"},{"chapter":"Δ","id":"kolymbao","fr":"nager","type":"verb","answer":"κολυμβάω"},{"chapter":"Δ","id":"lego","fr":"dire","type":"verb","answer":"λέγω"},{"chapter":"Δ","id":"petomai","fr":"voler","type":"verb","answer":"πέτομαι"},{"chapter":"Δ","id":"pedao","fr":"sauter","type":"verb","answer":"πηδάω"},{"chapter":"Δ","id":"poieo","fr":"faire","type":"verb","answer":"ποιέω"},{"chapter":"Δ","id":"trecho","fr":"courir","type":"verb","answer":"τρέχω"},{"chapter":"Δ","id":"eti","fr":"encore","type":"adverb","answer":"ἔτι"},{"chapter":"Δ","id":"monon","fr":"seulement","type":"adverb","answer":"μόνον"},{"chapter":"Δ","id":"eite","fr":"soit... soit","type":"conjunction","answer":"εἴτε εἴτε"},{"chapter":"Δ","id":"hosper","fr":"comme","type":"conjunction","answer":"ὥσπερ"},{"chapter":"Ε","id":"adelphe","fr":"la sœur","type":"noun","article":"ἡ","word":"ἀδελφή","genitive":"ἀδελφῆς","declension":1},{"chapter":"Ε","id":"adelphos","fr":"le frère","type":"noun","article":"ὁ","word":"ἀδελφός","genitive":"ἀδελφοῦ","declension":2},{"chapter":"Ε","id":"goneis","fr":"les parents","type":"noun","article":"οἱ","word":"γονεῖς","genitive":"γονέων","declension":3},{"chapter":"Ε","id":"despoina","fr":"la maîtresse","type":"noun","article":"ἡ","word":"δέσποινα","genitive":"δεσποίνης","declension":1},{"chapter":"Ε","id":"despotes","fr":"le maître","type":"noun","article":"ὁ","word":"δεσπότης","genitive":"δεσπότου","declension":1},{"chapter":"Ε","id":"doule","fr":"l'esclave (f.)","type":"noun","article":"ἡ","word":"δούλη","genitive":"δούλης","declension":1},{"chapter":"Ε","id":"doulos","fr":"l'esclave (m.)","type":"noun","article":"ὁ","word":"δοῦλος","genitive":"δούλου","declension":2},{"chapter":"Ε","id":"enggonos","fr":"le petit-enfant","type":"noun","article":"ὁ/ἡ","word":"ἔγγονος","genitive":"ἐγγόνου","declension":2},{"chapter":"Ε","id":"thygater","fr":"la fille","type":"noun","article":"ἡ","word":"θυγάτηρ","genitive":"θυγατρός","declension":3},{"chapter":"Ε","id":"meter","fr":"la mère","type":"noun","article":"ἡ","word":"μήτηρ","genitive":"μητρός","declension":3},{"chapter":"Ε","id":"oikos","fr":"la maison","type":"noun","article":"ὁ","word":"οἶκος","genitive":"οἴκου","declension":2},{"chapter":"Ε","id":"pappos","fr":"le grand-père","type":"noun","article":"ὁ","word":"πάππος","genitive":"πάππου","declension":2},{"chapter":"Ε","id":"pater","fr":"le père","type":"noun","article":"ὁ","word":"πατήρ","genitive":"πατρός","declension":3},{"chapter":"Ε","id":"progonos","fr":"l'ancêtre","type":"noun","article":"ὁ/ἡ","word":"πρόγονος","genitive":"προγόνου","declension":2},{"chapter":"Ε","id":"teknon","fr":"l'enfant","type":"noun","article":"τό","word":"τέκνον","genitive":"τέκνου","declension":2},{"chapter":"Ε","id":"tithe","fr":"la nourrice","type":"noun","article":"ἡ","word":"τίθη","genitive":"τίθης","declension":1},{"chapter":"Ε","id":"huios","fr":"le fils","type":"noun","article":"ὁ","word":"υἱός","genitive":"υἱοῦ","declension":2},{"chapter":"Ε","id":"genikos","fr":"génitif","type":"adjective","answer":"γενικός ή όν"},{"chapter":"Ε","id":"philos","fr":"cher / ami","type":"adjective","answer":"φίλος η ον"},{"chapter":"Ε","id":"idou","fr":"voici !","type":"adverb","answer":"ἰδού"},{"chapter":"Ε","id":"tout_estin","fr":"c'est-à-dire","type":"phrase","answer":"τοῦτ ἔστιν"},{"chapter":"Ε","id":"aisopos","fr":"Ésope","type":"proper","answer":"ὁ Αἴσωπος"},{"chapter":"Ε","id":"hippolytos","fr":"Hippolyte","type":"proper","answer":"ὁ Ἱππόλυτος"},{"chapter":"Ε","id":"thaleia","fr":"Thalie","type":"proper","answer":"ἡ Θάλεια"},{"chapter":"Ε","id":"pandoraE","fr":"Pandore","type":"proper","answer":"ἡ Πανδώρα"},{"chapter":"Ζ","id":"ginomai","fr":"devenir / naître","type":"verb","answer":"γίγνομαι"},{"chapter":"Ζ","id":"autos","fr":"lui-même / elle-même","type":"pronoun","answer":"αὐτός αὐτή αὐτό"},{"chapter":"Ζ","id":"angelos","fr":"le messager","type":"noun","article":"ὁ","word":"ἄγγελος","genitive":"ἀγγέλου","declension":2},{"chapter":"Ζ","id":"ampelos","fr":"la vigne","type":"noun","article":"ἡ","word":"ἄμπελος","genitive":"ἀμπέλου","declension":2},{"chapter":"Ζ","id":"astronomia","fr":"l'astronomie","type":"noun","article":"ἡ","word":"ἀστρονομία","genitive":"ἀστρονομίας","declension":1},{"chapter":"Ζ","id":"aphros","fr":"l'écume","type":"noun","article":"ὁ","word":"ἀφρός","genitive":"ἀφροῦ","declension":2},{"chapter":"Ζ","id":"gamos","fr":"le mariage","type":"noun","article":"ὁ","word":"γάμος","genitive":"γάμου","declension":2},{"chapter":"Ζ","id":"georgia","fr":"l'agriculture","type":"noun","article":"ἡ","word":"γεωργία","genitive":"γεωργίας","declension":1},{"chapter":"Ζ","id":"episteme","fr":"la science","type":"noun","article":"ἡ","word":"ἐπιστήμη","genitive":"ἐπιστήμης","declension":1},{"chapter":"Ζ","id":"eros_common","fr":"l'amour","type":"noun","article":"ὁ","word":"ἔρως","genitive":"ἔρωτος","declension":3},{"chapter":"Ζ","id":"hestia_common","fr":"le foyer","type":"noun","article":"ἡ","word":"ἑστία","genitive":"ἑστίας","declension":1},{"chapter":"Ζ","id":"heuretes","fr":"l'inventeur","type":"noun","article":"ὁ","word":"εὑρετής","genitive":"εὑρετοῦ","declension":1},{"chapter":"Ζ","id":"hemitheos","fr":"le demi-dieu","type":"noun","article":"ὁ","word":"ἡμίθεος","genitive":"ἡμιθέου","declension":2},{"chapter":"Ζ","id":"heros","fr":"le héros","type":"noun","article":"ὁ","word":"ἥρως","genitive":"ἥρωος","declension":3},{"chapter":"Ζ","id":"thera","fr":"la chasse","type":"noun","article":"ἡ","word":"θήρα","genitive":"θήρας","declension":1},{"chapter":"Ζ","id":"historia","fr":"l'histoire","type":"noun","article":"ἡ","word":"ἱστορία","genitive":"ἱστορίας","declension":1},{"chapter":"Ζ","id":"komodia","fr":"la comédie","type":"noun","article":"ἡ","word":"κωμῳδία","genitive":"κωμῳδίας","declension":1},{"chapter":"Ζ","id":"manteia","fr":"la divination","type":"noun","article":"ἡ","word":"μαντεία","genitive":"μαντείας","declension":1},{"chapter":"Ζ","id":"mousa","fr":"la muse","type":"noun","article":"ἡ","word":"μοῦσα","genitive":"μούσης","declension":1},{"chapter":"Ζ","id":"mousike","fr":"la musique","type":"noun","article":"ἡ","word":"μουσική","genitive":"μουσικῆς","declension":1},{"chapter":"Ζ","id":"nymphe","fr":"la nymphe","type":"noun","article":"ἡ","word":"νύμφη","genitive":"νύμφης","declension":1},{"chapter":"Ζ","id":"oinos","fr":"le vin","type":"noun","article":"ὁ","word":"οἶνος","genitive":"οἴνου","declension":2},{"chapter":"Ζ","id":"poiesis","fr":"la poésie","type":"noun","article":"ἡ","word":"ποίησις","genitive":"ποιήσεως","declension":3},{"chapter":"Ζ","id":"poietes","fr":"le poète","type":"noun","article":"ὁ","word":"ποιητής","genitive":"ποιητοῦ","declension":1},{"chapter":"Ζ","id":"polemos","fr":"la guerre","type":"noun","article":"ὁ","word":"πόλεμος","genitive":"πολέμου","declension":2},{"chapter":"Ζ","id":"pyr","fr":"le feu","type":"noun","article":"τό","word":"πῦρ","genitive":"πυρός","declension":3},{"chapter":"Ζ","id":"sophia","fr":"la sagesse","type":"noun","article":"ἡ","word":"σοφία","genitive":"σοφίας","declension":1},{"chapter":"Ζ","id":"techne","fr":"l'art / la technique","type":"noun","article":"ἡ","word":"τέχνη","genitive":"τέχνης","declension":1},{"chapter":"Ζ","id":"tragodia","fr":"la tragédie","type":"noun","article":"ἡ","word":"τραγῳδία","genitive":"τραγῳδίας","declension":1},{"chapter":"Ζ","id":"hymnos","fr":"l'hymne","type":"noun","article":"ὁ","word":"ὕμνος","genitive":"ὕμνου","declension":2},{"chapter":"Ζ","id":"phone","fr":"la voix","type":"noun","article":"ἡ","word":"φωνή","genitive":"φωνῆς","declension":1},{"chapter":"Ζ","id":"choros","fr":"le chœur / la danse","type":"noun","article":"ὁ","word":"χορός","genitive":"χοροῦ","declension":2},{"chapter":"Ζ","id":"energetikos","fr":"actif","type":"adjective","answer":"ἐνεργητικός ή όν"},{"chapter":"Ζ","id":"epikos","fr":"épique","type":"adjective","answer":"ἐπικός ή όν"},{"chapter":"Ζ","id":"lyrikos","fr":"lyrique","type":"adjective","answer":"λυρικός ή όν"},{"chapter":"Ζ","id":"melas","fr":"noir","type":"adjective","answer":"μέλας μέλαινα μέλαν"},{"chapter":"Ζ","id":"protogonos","fr":"primordial / premier-né","type":"adjective","answer":"πρωτόγονος ον"},{"chapter":"Ζ","id":"epeita","fr":"ensuite","type":"adverb","answer":"ἔπειτα"},{"chapter":"Ζ","id":"proton","fr":"d'abord","type":"adverb","answer":"πρῶτον"},{"chapter":"Ζ","id":"pos","fr":"comment ?","type":"adverb","answer":"πῶς"},{"chapter":"Ζ","id":"oti","fr":"que / parce que","type":"conjunction","answer":"ὅτι"},{"chapter":"Ζ","id":"ek","fr":"hors de / depuis","type":"preposition","answer":"ἐκ ἐξ","cases":["gen"]},{"chapter":"Ζ","id":"en_z","fr":"dans / en","type":"preposition","answer":"ἐν","cases":["dat"]},{"chapter":"Ζ","id":"aither","fr":"Éther","type":"proper","answer":"ὁ Αἰθήρ"},{"chapter":"Ζ","id":"alkmene","fr":"Alcmène","type":"proper","answer":"ἡ Ἀλκμήνη"},{"chapter":"Ζ","id":"atlas","fr":"Atlas","type":"proper","answer":"ὁ Ἄτλας"},{"chapter":"Ζ","id":"gaia","fr":"Gaïa","type":"proper","answer":"ἡ Γαῖα"},{"chapter":"Ζ","id":"deukalion","fr":"Deucalion","type":"proper","answer":"ὁ Δευκαλίων"},{"chapter":"Ζ","id":"dione","fr":"Dioné","type":"proper","answer":"ἡ Διώνη"},{"chapter":"Ζ","id":"epimetheus","fr":"Épiméthée","type":"proper","answer":"ὁ Ἐπιμηθεύς"},{"chapter":"Ζ","id":"erato","fr":"Érato","type":"proper","answer":"ἡ Ἐρατώ"},{"chapter":"Ζ","id":"erebos","fr":"Érèbe","type":"proper","answer":"τό Ἔρεβος"},{"chapter":"Ζ","id":"eros_prop","fr":"Éros","type":"proper","answer":"ὁ Ἔρως"},{"chapter":"Ζ","id":"hestia_prop","fr":"Hestia","type":"proper","answer":"ἡ Ἑστία"},{"chapter":"Ζ","id":"hera_Z","fr":"Héra","type":"proper","answer":"ἡ Ἥρα"},{"chapter":"Ζ","id":"herakles","fr":"Héraclès","type":"proper","answer":"ὁ Ἡρακλῆς"},{"chapter":"Ζ","id":"hesiodos","fr":"Hésiode","type":"proper","answer":"ὁ Ἡσίοδος"},{"chapter":"Ζ","id":"homeros","fr":"Homère","type":"proper","answer":"ὁ Ὅμηρος"},{"chapter":"Ζ","id":"ouranos","fr":"Ouranos","type":"proper","answer":"ὁ Οὐρανός"},{"chapter":"Ζ","id":"prometheus","fr":"Prométhée","type":"proper","answer":"ὁ Προμηθεύς"},{"chapter":"Ζ","id":"pandoraZ","fr":"Pandore","type":"proper","answer":"ἡ Πανδώρα"},{"chapter":"Ζ","id":"rhea","fr":"Rhéa","type":"proper","answer":"ἡ Ῥέα"},{"chapter":"Ζ","id":"styx","fr":"Styx","type":"proper","answer":"ἡ Στύξ"},{"chapter":"Ζ","id":"chaos","fr":"Chaos","type":"proper","answer":"τό Χάος"},{"chapter":"Θ","id":"oros","fr":"la montagne","type":"noun","article":"τό","word":"ὄρος","genitive":"ὄρους","declension":3},{"chapter":"Θ","id":"pelagos","fr":"la haute mer","type":"noun","article":"τό","word":"πέλαγος","genitive":"πελάγους","declension":3},{"chapter":"Θ","id":"stenon","fr":"le détroit","type":"noun","article":"τό","word":"στενόν","genitive":"στενοῦ","declension":2},{"chapter":"Θ","id":"ionios_adj","fr":"ionien","type":"adjective","answer":"Ἰόνιος ον"},{"chapter":"Θ","id":"aigaios","fr":"égéen","type":"adjective","answer":"Αἰγαῖος α ον"},{"chapter":"Θ","id":"athenai","fr":"Athènes","type":"proper","answer":"αἱ Ἀθῆναι"},{"chapter":"Θ","id":"aigeus","fr":"Égée","type":"proper","answer":"ὁ Αἰγεύς"},{"chapter":"Θ","id":"aiolis","fr":"Éolide","type":"proper","answer":"ἡ Αἰολίς"},{"chapter":"Θ","id":"alpheios","fr":"Alphée","type":"proper","answer":"ὁ Ἀλφειός"},{"chapter":"Θ","id":"andros","fr":"Andros","type":"proper","answer":"ἡ Ἄνδρος"},{"chapter":"Θ","id":"axios","fr":"Axios","type":"proper","answer":"ὁ Ἀξιός"},{"chapter":"Θ","id":"attike","fr":"Attique","type":"proper","answer":"ἡ Ἀττική"},{"chapter":"Θ","id":"boiotia","fr":"Béotie","type":"proper","answer":"ἡ Βοιωτία"},{"chapter":"Θ","id":"delphoi","fr":"Delphes","type":"proper","answer":"οἱ Δελφοί"},{"chapter":"Θ","id":"dodone","fr":"Dodone","type":"proper","answer":"ἡ Δωδώνη"},{"chapter":"Θ","id":"euboia","fr":"Eubée","type":"proper","answer":"ἡ Εὔβοια"},{"chapter":"Θ","id":"zakynthos","fr":"Zante","type":"proper","answer":"ἡ Ζάκυνθος"},{"chapter":"Θ","id":"epeiros","fr":"Épire","type":"proper","answer":"ἡ Ἤπειρος"},{"chapter":"Θ","id":"thermopylai","fr":"Thermopyles","type":"proper","answer":"αἱ Θερμοπύλαι"},{"chapter":"Θ","id":"thebai","fr":"Thèbes","type":"proper","answer":"αἱ Θῆβαι"},{"chapter":"Θ","id":"thrake","fr":"Thrace","type":"proper","answer":"ἡ Θρᾴκη"},{"chapter":"Θ","id":"ithake","fr":"Ithaque","type":"proper","answer":"ἡ Ἰθάκη"},{"chapter":"Θ","id":"ilios","fr":"Ilissos","type":"proper","answer":"ὁ Ἰλισός"},{"chapter":"Θ","id":"ionion","fr":"mer Ionienne","type":"proper","answer":"τό Ἰόνιον"},{"chapter":"Θ","id":"io","fr":"Io","type":"proper","answer":"ἡ Ἰώ"},{"chapter":"Θ","id":"ionia","fr":"Ionie","type":"proper","answer":"ἡ Ἰωνία"},{"chapter":"Θ","id":"kephallenia","fr":"Céphalonie","type":"proper","answer":"ἡ Κεφαλληνία"},{"chapter":"Θ","id":"korinthos","fr":"Corinthe","type":"proper","answer":"ἡ Κόρινθος"},{"chapter":"Θ","id":"korkyra","fr":"Corcyre","type":"proper","answer":"ἡ Κόρκυρα"},{"chapter":"Θ","id":"kyklades","fr":"Cyclades","type":"proper","answer":"αἱ Κυκλάδες"},{"chapter":"Θ","id":"lesbos","fr":"Lesbos","type":"proper","answer":"ἡ Λέσβος"},{"chapter":"Θ","id":"lemnos","fr":"Lemnos","type":"proper","answer":"ἡ Λῆμνος"},{"chapter":"Θ","id":"makedonia","fr":"Macédoine","type":"proper","answer":"ἡ Μακεδονία"},{"chapter":"Θ","id":"mykonos","fr":"Mykonos","type":"proper","answer":"ἡ Μύκονος"},{"chapter":"Θ","id":"mytilene","fr":"Mytilène","type":"proper","answer":"ἡ Μυτιλήνη"},{"chapter":"Θ","id":"nestos","fr":"Nestos","type":"proper","answer":"ὁ Νέστος"},{"chapter":"Θ","id":"olympia","fr":"Olympie","type":"proper","answer":"ἡ Ὀλυμπία"},{"chapter":"Θ","id":"parnes","fr":"Parnès","type":"proper","answer":"ἡ Πάρνης"},{"chapter":"Θ","id":"pella","fr":"Pella","type":"proper","answer":"ἡ Πέλλα"},{"chapter":"Θ","id":"peloponnesos","fr":"Péloponnèse","type":"proper","answer":"ἡ Πελοπόννησος"},{"chapter":"Θ","id":"penteli","fr":"Pentélique","type":"proper","answer":"ἡ Πεντέλη"},{"chapter":"Θ","id":"samos","fr":"Samos","type":"proper","answer":"ἡ Σάμος"},{"chapter":"Θ","id":"smyrne","fr":"Smyrne","type":"proper","answer":"ἡ Σμύρνη"},{"chapter":"Θ","id":"sparti","fr":"Sparte","type":"proper","answer":"ἡ Σπάρτη"},{"chapter":"Θ","id":"phokis","fr":"Phocide","type":"proper","answer":"ἡ Φωκίς"},{"chapter":"Ι","id":"ado","fr":"chanter","type":"verb","answer":"ᾄδω"},{"chapter":"Ι","id":"anagignosko","fr":"lire","type":"verb","answer":"ἀναγιγνώσκω"},{"chapter":"Ι","id":"anapauomai","fr":"se reposer","type":"verb","answer":"ἀναπαύομαι"},{"chapter":"Ι","id":"apeimi","fr":"être absent / s'en aller","type":"verb","answer":"ἄπειμι"},{"chapter":"Ι","id":"diatribo","fr":"passer le temps","type":"verb","answer":"διατρίβω"},{"chapter":"Ι","id":"dyei","fr":"se couche / plonge","type":"verb","answer":"δύει"},{"chapter":"Ι","id":"heurisko","fr":"trouver","type":"verb","answer":"εὑρίσκω"},{"chapter":"Ι","id":"echo","fr":"avoir","type":"verb","answer":"ἔχω"},{"chapter":"Ι","id":"zeteo","fr":"chercher","type":"verb","answer":"ζητέω"},{"chapter":"Ι","id":"therapeuo","fr":"soigner","type":"verb","answer":"θεραπεύω"},{"chapter":"Ι","id":"katheudo","fr":"dormir","type":"verb","answer":"καθεύδω"},{"chapter":"Ι","id":"kaleo","fr":"appeler","type":"verb","answer":"καλέω"},{"chapter":"Ι","id":"ktenizo","fr":"peigner","type":"verb","answer":"κτενίζω"},{"chapter":"Ι","id":"lambano","fr":"prendre","type":"verb","answer":"λαμβάνω"},{"chapter":"Ι","id":"leipo","fr":"laisser","type":"verb","answer":"λείπω"},{"chapter":"Ι","id":"louo","fr":"laver / se laver","type":"verb","answer":"λούω λούομαι"},{"chapter":"Ι","id":"mageireuo","fr":"cuisiner","type":"verb","answer":"μαγειρεύω"},{"chapter":"Ι","id":"horao","fr":"voir","type":"verb","answer":"ὁράω"},{"chapter":"Ι","id":"paraskeuazo","fr":"préparer","type":"verb","answer":"παρασκευάζω"},{"chapter":"Ι","id":"pareimi","fr":"être présent","type":"verb","answer":"πάρειμι"},{"chapter":"Ι","id":"rapto","fr":"coudre","type":"verb","answer":"ῥάπτω"},{"chapter":"Ι","id":"trepho","fr":"nourrir","type":"verb","answer":"τρέφω"},{"chapter":"Ι","id":"phileo","fr":"aimer","type":"verb","answer":"φιλέω"},{"chapter":"Ι","id":"kata_oikon","fr":"à la maison","type":"preposition","answer":"κατά οἶκον","cases":["acc"]},{"chapter":"Ι","id":"andronitis","fr":"la partie des hommes","type":"noun","article":"ἡ","word":"ἀνδρωνῖτις","genitive":"ἀνδρωνίτιδος","declension":3},{"chapter":"Ι","id":"apotheke","fr":"le magasin / dépôt","type":"noun","article":"ἡ","word":"ἀποθήκη","genitive":"ἀποθήκης","declension":1},{"chapter":"Ι","id":"aule","fr":"la cour","type":"noun","article":"ἡ","word":"αὐλή","genitive":"αὐλῆς","declension":1},{"chapter":"Ι","id":"aulion","fr":"la petite cour","type":"noun","article":"τό","word":"αὔλιον","genitive":"αὐλίου","declension":2},{"chapter":"Ι","id":"bibliotheke","fr":"la bibliothèque","type":"noun","article":"ἡ","word":"βιβλιοθήκη","genitive":"βιβλιοθήκης","declension":1},{"chapter":"Ι","id":"biblion","fr":"le livre","type":"noun","article":"τό","word":"βιβλίον","genitive":"βιβλίου","declension":2},{"chapter":"Ι","id":"bomos","fr":"l'autel","type":"noun","article":"ὁ","word":"βωμός","genitive":"βωμοῦ","declension":2},{"chapter":"Ι","id":"gynaikonitis","fr":"la partie des femmes","type":"noun","article":"ἡ","word":"γυναικωνῖτις","genitive":"γυναικωνίτιδος","declension":3},{"chapter":"Ι","id":"deipnon","fr":"le repas","type":"noun","article":"τό","word":"δεῖπνον","genitive":"δείπνου","declension":2},{"chapter":"Ι","id":"domation","fr":"la chambre","type":"noun","article":"τό","word":"δωμάτιον","genitive":"δωματίου","declension":2},{"chapter":"Ι","id":"epistole","fr":"la lettre (courrier)","type":"noun","article":"ἡ","word":"ἐπιστολή","genitive":"ἐπιστολῆς","declension":1},{"chapter":"Ι","id":"ergon","fr":"le travail","type":"noun","article":"τό","word":"ἔργον","genitive":"ἔργου","declension":2},{"chapter":"Ι","id":"hespera","fr":"le soir","type":"noun","article":"ἡ","word":"ἑσπέρα","genitive":"ἑσπέρας","declension":1},{"chapter":"Ι","id":"hemera","fr":"le jour","type":"noun","article":"ἡ","word":"ἡμέρα","genitive":"ἡμέρας","declension":1},{"chapter":"Ι","id":"thalamos","fr":"la chambre à coucher","type":"noun","article":"ὁ","word":"θάλαμος","genitive":"θαλάμου","declension":2},{"chapter":"Ι","id":"thronos","fr":"le siège / trône","type":"noun","article":"ὁ","word":"θρόνος","genitive":"θρόνου","declension":2},{"chapter":"Ι","id":"thyra","fr":"la porte","type":"noun","article":"ἡ","word":"θύρα","genitive":"θύρας","declension":1},{"chapter":"Ι","id":"thyris","fr":"la fenêtre","type":"noun","article":"ἡ","word":"θυρίς","genitive":"θυρίδος","declension":3},{"chapter":"Ι","id":"kathedra","fr":"le siège / chaise","type":"noun","article":"ἡ","word":"καθέδρα","genitive":"καθέδρας","declension":1},{"chapter":"Ι","id":"kalamos","fr":"le roseau / calame","type":"noun","article":"ὁ","word":"κάλαμος","genitive":"καλάμου","declension":2},{"chapter":"Ι","id":"kepos","fr":"le jardin","type":"noun","article":"ὁ","word":"κῆπος","genitive":"κήπου","declension":2},{"chapter":"Ι","id":"kibotion","fr":"le coffret","type":"noun","article":"τό","word":"κιβώτιον","genitive":"κιβωτίου","declension":2},{"chapter":"Ι","id":"kithara","fr":"la cithare","type":"noun","article":"ἡ","word":"κιθάρα","genitive":"κιθάρας","declension":1},{"chapter":"Ι","id":"klimax","fr":"l'escalier / échelle","type":"noun","article":"ἡ","word":"κλῖμαξ","genitive":"κλίμακος","declension":3},{"chapter":"Ι","id":"kline","fr":"le lit","type":"noun","article":"ἡ","word":"κλίνη","genitive":"κλίνης","declension":1},{"chapter":"Ι","id":"kome","fr":"la chevelure","type":"noun","article":"ἡ","word":"κόμη","genitive":"κόμης","declension":1},{"chapter":"Ι","id":"loutron","fr":"le bain","type":"noun","article":"τό","word":"λουτρόν","genitive":"λουτροῦ","declension":2},{"chapter":"Ι","id":"mageireion","fr":"la cuisine","type":"noun","article":"τό","word":"μαγειρεῖον","genitive":"μαγειρείου","declension":2},{"chapter":"Ι","id":"melon","fr":"la pomme","type":"noun","article":"τό","word":"μῆλον","genitive":"μήλου","declension":2},{"chapter":"Ι","id":"nyx","fr":"la nuit","type":"noun","article":"ἡ","word":"νύξ","genitive":"νυκτός","declension":3},{"chapter":"Ι","id":"xylon","fr":"le bois","type":"noun","article":"τό","word":"ξύλον","genitive":"ξύλου","declension":2},{"chapter":"Ι","id":"oneiron","fr":"le rêve","type":"noun","article":"τό","word":"ὄνειρον","genitive":"ὀνείρου","declension":2},{"chapter":"Ι","id":"papyros","fr":"le papyrus","type":"noun","article":"ὁ","word":"πάπυρος","genitive":"παπύρου","declension":2},{"chapter":"Ι","id":"peplos","fr":"le péplos / vêtement","type":"noun","article":"ὁ","word":"πέπλος","genitive":"πέπλου","declension":2},{"chapter":"Ι","id":"peristylion","fr":"le péristyle","type":"noun","article":"τό","word":"περιστύλιον","genitive":"περιστυλίου","declension":2},{"chapter":"Ι","id":"stylos","fr":"la colonne","type":"noun","article":"ὁ","word":"στῦλος","genitive":"στύλου","declension":2},{"chapter":"Ι","id":"symposion","fr":"le banquet","type":"noun","article":"τό","word":"συμπόσιον","genitive":"συμποσίου","declension":2},{"chapter":"Ι","id":"trapeza","fr":"la table","type":"noun","article":"ἡ","word":"τράπεζα","genitive":"τραπέζης","declension":1},{"chapter":"Ι","id":"trophe","fr":"la nourriture","type":"noun","article":"ἡ","word":"τροφή","genitive":"τροφῆς","declension":1},{"chapter":"Ι","id":"hypnos","fr":"le sommeil","type":"noun","article":"ὁ","word":"ὕπνος","genitive":"ὕπνου","declension":2},{"chapter":"Ι","id":"aitiatikos","fr":"accusatif","type":"adjective","answer":"αἰτιατικός ή όν"},{"chapter":"Ι","id":"diplous","fr":"double","type":"adjective","answer":"διπλοῦς ῆ οῦν"},{"chapter":"Ι","id":"kletikos","fr":"vocatif","type":"adjective","answer":"κλητικός ή όν"},{"chapter":"Ι","id":"xylinos","fr":"en bois","type":"adjective","answer":"ξύλινος η ον"},{"chapter":"Ι","id":"peristylos","fr":"à péristyle","type":"adjective","answer":"περίστυλος ον"},{"chapter":"Ι","id":"hama","fr":"en même temps","type":"adverb","answer":"ἅμα"},{"chapter":"Ι","id":"ede","fr":"déjà","type":"adverb","answer":"ἤδη"},{"chapter":"Ι","id":"kalos_adv","fr":"bien","type":"adverb","answer":"καλῶς"},{"chapter":"Ι","id":"telos","fr":"enfin","type":"adverb","answer":"τέλος"},{"chapter":"Ι","id":"o","fr":"ô !","type":"interjection","answer":"ὦ"},{"chapter":"ΙΑ","id":"ago","fr":"conduire / amener","type":"verb","answer":"ἄγω"},{"chapter":"ΙΑ","id":"anatello","fr":"se lever","type":"verb","answer":"ἀνατέλλω"},{"chapter":"ΙΑ","id":"anoigo","fr":"ouvrir","type":"verb","answer":"ἀνοίγω"},{"chapter":"ΙΑ","id":"apallasso","fr":"délivrer / éloigner","type":"verb","answer":"ἀπαλλάσσω"},{"chapter":"ΙΑ","id":"apokrinomai","fr":"répondre","type":"verb","answer":"ἀποκρίνομαι"},{"chapter":"ΙΑ","id":"aphypnizo","fr":"réveiller","type":"verb","answer":"ἀφυπνίζω"},{"chapter":"ΙΑ","id":"egeiro","fr":"réveiller / se lever","type":"verb","answer":"ἐγείρω ἐγείρομαι"},{"chapter":"ΙΑ","id":"ekbaino","fr":"sortir","type":"verb","answer":"ἐκβαίνω"},{"chapter":"ΙΑ","id":"endyo","fr":"mettre / s'habiller","type":"verb","answer":"ἐνδύω ἐνδύομαι"},{"chapter":"ΙΑ","id":"erotao","fr":"interroger","type":"verb","answer":"ἐρωτάω"},{"chapter":"ΙΑ","id":"katabaino","fr":"descendre","type":"verb","answer":"καταβαίνω"},{"chapter":"ΙΑ","id":"nizo","fr":"laver","type":"verb","answer":"νίζω"},{"chapter":"ΙΑ","id":"proseuchomai","fr":"prier","type":"verb","answer":"προσεύχομαι"},{"chapter":"ΙΑ","id":"stenazo","fr":"gémir","type":"verb","answer":"στενάζω"},{"chapter":"ΙΑ","id":"timao","fr":"honorer","type":"verb","answer":"τιμάω"},{"chapter":"ΙΑ","id":"phero","fr":"porter","type":"verb","answer":"φέρω"},{"chapter":"ΙΑ","id":"artos","fr":"le pain","type":"noun","article":"ὁ","word":"ἄρτος","genitive":"ἄρτου","declension":2},{"chapter":"ΙΑ","id":"gala","fr":"le lait","type":"noun","article":"τό","word":"γάλα","genitive":"γάλακτος","declension":3},{"chapter":"ΙΑ","id":"kantharos","fr":"la coupe / canthare","type":"noun","article":"ὁ","word":"κάνθαρος","genitive":"κανθάρου","declension":2},{"chapter":"ΙΑ","id":"kylix","fr":"la coupe","type":"noun","article":"ἡ","word":"κύλιξ","genitive":"κύλικος","declension":3},{"chapter":"ΙΑ","id":"lekakion","fr":"la cuvette / bassin","type":"noun","article":"τό","word":"λεκάκιον","genitive":"λεκακίου","declension":2},{"chapter":"ΙΑ","id":"meli","fr":"le miel","type":"noun","article":"τό","word":"μέλι","genitive":"μέλιτος","declension":3},{"chapter":"ΙΑ","id":"orthros","fr":"l'aube","type":"noun","article":"ὁ","word":"ὄρθρος","genitive":"ὄρθρου","declension":2},{"chapter":"ΙΑ","id":"prosopon","fr":"le visage","type":"noun","article":"τό","word":"πρόσωπον","genitive":"προσώπου","declension":2},{"chapter":"ΙΑ","id":"symphora","fr":"le malheur","type":"noun","article":"ἡ","word":"συμφορά","genitive":"συμφορᾶς","declension":1},{"chapter":"ΙΑ","id":"tyros","fr":"le fromage","type":"noun","article":"ὁ","word":"τυρός","genitive":"τυροῦ","declension":2},{"chapter":"ΙΑ","id":"hydria","fr":"la cruche à eau","type":"noun","article":"ἡ","word":"ὑδρία","genitive":"ὑδρίας","declension":1},{"chapter":"ΙΑ","id":"chiton","fr":"la tunique","type":"noun","article":"ὁ","word":"χιτών","genitive":"χιτῶνος","declension":3},{"chapter":"ΙΑ","id":"monos","fr":"seul","type":"adjective","answer":"μόνος η ον"},{"chapter":"ΙΑ","id":"poneros","fr":"mauvais / méchant","type":"adjective","answer":"πονηρός ά όν"},{"chapter":"ΙΑ","id":"prostaktikos","fr":"impératif","type":"adjective","answer":"προστακτικός ή όν"},{"chapter":"ΙΑ","id":"sophos","fr":"sage","type":"adjective","answer":"σοφός ή όν"},{"chapter":"ΙΑ","id":"talas","fr":"malheureux","type":"adjective","answer":"τάλας τάλαινα τάλαν"},{"chapter":"ΙΑ","id":"dia","fr":"à cause de / par","type":"preposition","answer":"διά","cases":["acc"]},{"chapter":"ΙΑ","id":"epi_dat","fr":"sur (avec datif)","type":"preposition","answer":"ἐπί","cases":["dat"]},{"chapter":"ΙΑ","id":"kata_gen","fr":"contre / d'après (avec génitif)","type":"preposition","answer":"κατά","cases":["gen"]},{"chapter":"ΙΑ","id":"meta","fr":"après / avec","type":"preposition","answer":"μετά","cases":["acc"]},{"chapter":"ΙΑ","id":"pros_acc","fr":"vers (avec accusatif)","type":"preposition","answer":"πρός","cases":["acc"]},{"chapter":"ΙΑ","id":"syn","fr":"avec","type":"preposition","answer":"σύν","cases":["dat"]},{"chapter":"ΙΑ","id":"hypo_dat","fr":"sous (avec datif)","type":"preposition","answer":"ὑπό","cases":["dat"]},{"chapter":"ΙΑ","id":"ego","fr":"je","type":"pronoun","answer":"ἐγώ"},{"chapter":"ΙΑ","id":"oudeis","fr":"personne / aucun","type":"pronoun","answer":"οὐδείς οὐδεμία οὐδέν"},{"chapter":"ΙΑ","id":"sy","fr":"tu","type":"pronoun","answer":"σύ"},{"chapter":"ΙΑ","id":"ge","fr":"du moins / précisément","type":"particle","answer":"γε"},{"chapter":"ΙΑ","id":"de","fr":"certes / donc","type":"particle","answer":"δή"},{"chapter":"ΙΑ","id":"malista","fr":"surtout","type":"adverb","answer":"μάλιστα"},{"chapter":"ΙΑ","id":"ouketi","fr":"ne... plus","type":"adverb","answer":"οὐκέτι"},{"chapter":"ΙΑ","id":"palin","fr":"de nouveau","type":"adverb","answer":"πάλιν"},{"chapter":"ΙΑ","id":"pothen","fr":"d'où ?","type":"adverb","answer":"πόθεν"}];
+const STORAGE_KEY="grecAncienMultiChaptersV2";
+let saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");
+if(!saved.words)saved.words={};
+if(!saved.stats)saved.stats={correct:0,wrong:0,skipped:0};
+let current=null,selectedDeclension=null,selectedCases=[],answered=false,recentIds=[];
+
+function normalizeGreek(text){
+ let s=text.normalize("NFD");
+ s=s.replace(/[\u0300\u0301\u0340\u0341\u0342]/g,"");
+ return s.normalize("NFC").toLowerCase().replace(/[,.;·]/g," ").replace(/[-–—]/g," ").replace(/\s+/g," ").trim();
 }
-
-];
-
-
-/* =====================================================
-   SAUVEGARDE
-   ===================================================== */
-
-const STORAGE_KEY = "grecAncienChapitreDeltaV1";
-
-let saved = JSON.parse(
-  localStorage.getItem(STORAGE_KEY) || "{}"
-);
-
-if (!saved.words) saved.words = {};
-if (!saved.stats) {
-  saved.stats = {
-    correct: 0,
-    wrong: 0,
-    skipped: 0
-  };
+function wordStats(id){if(!saved.words[id])saved.words[id]={correct:0,wrong:0,skipped:0};return saved.words[id]}
+function saveProgress(){localStorage.setItem(STORAGE_KEY,JSON.stringify(saved))}
+function activeLexicon(){
+ const f=document.getElementById("chapterFilter").value;
+ return f==="ALL"?lexicon:lexicon.filter(x=>x.chapter===f);
 }
-
-function saveProgress() {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(saved)
-  );
+function getWeight(item){
+ const s=wordStats(item.id);
+ let base=item.type==="proper"?0.18:1;
+ let difficulty=1+s.wrong*1.8+s.skipped*3;
+ let mastery=1+s.correct*0.5;
+ let w=base*difficulty/mastery;
+ if(recentIds.includes(item.id))w*=0.16;
+ return Math.max(w,0.03);
 }
-
-
-/* =====================================================
-   ÉTAT
-   ===================================================== */
-
-let current = null;
-let selectedDeclension = null;
-let answered = false;
-
-let recentIds = [];
-
-
-/* =====================================================
-   NORMALISATION
-
-   On enlève :
-   - accent aigu
-   - accent grave
-   - circonflexe
-
-   On CONSERVE :
-   - esprit doux
-   - esprit rude
-   - iota souscrit
-   - tréma
-
-   Donc les accents sont facultatifs,
-   mais les esprits restent obligatoires.
-   ===================================================== */
-
-function normalizeGreek(text) {
-
-  let s = text
-    .normalize("NFD");
-
-  s = s.replace(
-    /[\u0300\u0301\u0340\u0341\u0342]/g,
-    ""
-  );
-
-  s = s
-    .normalize("NFC")
-    .toLowerCase()
-
-    /* ponctuation facultative */
-    .replace(/[,\.;·]/g, " ")
-
-    /* tirets facultatifs */
-    .replace(/[-–—]/g, " ")
-
-    .replace(/\s+/g, " ")
-    .trim();
-
-  return s;
+function chooseWord(){
+ const pool=activeLexicon(); if(!pool.length)return null;
+ const weights=pool.map(getWeight),total=weights.reduce((a,b)=>a+b,0);
+ let r=Math.random()*total;
+ for(let i=0;i<pool.length;i++){r-=weights[i];if(r<=0)return pool[i]}
+ return pool[0];
 }
-
-
-/* =====================================================
-   PROGRESSION PAR MOT
-   ===================================================== */
-
-function wordStats(id) {
-
-  if (!saved.words[id]) {
-
-    saved.words[id] = {
-      correct: 0,
-      wrong: 0,
-      skipped: 0
-    };
-
-  }
-
-  return saved.words[id];
+function categoryName(t){
+ return {noun:"Nom",proper:"Nom propre",adjective:"Adjectif",verb:"Verbe",adverb:"Adverbe",conjunction:"Conjonction",
+ pronoun:"Pronom",article:"Article",particle:"Particule",number:"Nombre",preposition:"Préposition",phrase:"Expression",interjection:"Interjection"}[t]||"";
 }
-
-
-/* =====================================================
-   POIDS DE RÉVISION
-   ===================================================== */
-
-function getWeight(item) {
-
-  const s = wordStats(item.id);
-
-  /*
-    Noms propres :
-    environ 4 à 5 fois moins fréquents.
-  */
-
-  let base =
-    item.type === "proper"
-      ? 0.22
-      : 1;
-
-
-  /*
-    Erreur = mot plus fréquent.
-    Je passe = encore plus fréquent.
-  */
-
-  let difficulty =
-    1
-    + (s.wrong * 1.8)
-    + (s.skipped * 3);
-
-
-  /*
-    Plusieurs bonnes réponses
-    diminuent progressivement la fréquence.
-  */
-
-  let mastery =
-    1 + (s.correct * 0.5);
-
-
-  let weight =
-    base * difficulty / mastery;
-
-
-  /*
-    On évite de revoir immédiatement
-    les tout derniers mots.
-  */
-
-  if (recentIds.includes(item.id)) {
-    weight *= 0.18;
-  }
-
-
-  /*
-    Un mot très difficile reste quand même
-    susceptible de revenir rapidement.
-  */
-
-  return Math.max(weight, 0.03);
+function showWord(){
+ current=chooseWord(); if(!current)return;
+ recentIds.push(current.id); if(recentIds.length>4)recentIds.shift();
+ answered=false;selectedDeclension=null;selectedCases=[];
+ document.getElementById("question").textContent=current.fr;
+ document.getElementById("category").textContent="Chap. "+current.chapter+" · "+categoryName(current.type);
+ document.getElementById("answer").value="";
+ document.getElementById("feedback").innerHTML="";
+ document.getElementById("mainButton").textContent="Vérifier";
+ document.getElementById("skipButton").style.display="block";
+ document.getElementById("declensions").style.display=current.type==="noun"?"flex":"none";
+ document.getElementById("cases").style.display=current.type==="preposition"?"flex":"none";
+ for(let i=1;i<=3;i++)document.getElementById("decl"+i).classList.remove("selected");
+ ["gen","dat","acc"].forEach(c=>document.getElementById("case"+c).classList.remove("selected"));
+ document.getElementById("answer").focus();updateStats();
 }
-
-
-/* =====================================================
-   TIRAGE PONDÉRÉ
-   ===================================================== */
-
-function chooseWord() {
-
-  const weights =
-    lexicon.map(getWeight);
-
-  const total =
-    weights.reduce(
-      (a,b) => a+b,
-      0
-    );
-
-  let r =
-    Math.random() * total;
-
-  for (let i = 0; i < lexicon.length; i++) {
-
-    r -= weights[i];
-
-    if (r <= 0) {
-      return lexicon[i];
-    }
-
-  }
-
-  return lexicon[0];
+function resetAndShow(){recentIds=[];showWord()}
+function selectDeclension(n){selectedDeclension=n;for(let i=1;i<=3;i++)document.getElementById("decl"+i).classList.remove("selected");
+ ["gen","dat","acc"].forEach(c=>document.getElementById("case"+c).classList.remove("selected"));document.getElementById("decl"+n).classList.add("selected")}
+function parseNoun(text){
+ const parts=text.trim().replace(/\s+/g," ").split(" "); if(parts.length!==3)return null;
+ return {article:parts[0],word:parts[1],genitive:parts[2]};
 }
-
-
-/* =====================================================
-   CATÉGORIE
-   ===================================================== */
-
-function categoryName(type) {
-
-  switch(type) {
-
-    case "noun":
-      return "Nom";
-
-    case "proper":
-      return "Nom propre";
-
-    case "adjective":
-      return "Adjectif";
-
-    case "verb":
-      return "Verbe";
-
-    case "adverb":
-      return "Adverbe";
-
-    case "conjunction":
-      return "Conjonction";
-
-    default:
-      return "";
-
-  }
-
+function mainAction(){answered?showWord():checkAnswer()}
+function checkAnswer(){if(current.type==="noun")checkNoun();else if(current.type==="preposition")checkPreposition();else checkSimple()}
+function checkNoun(){
+ const user=parseNoun(document.getElementById("answer").value);
+ if(!user){document.getElementById("feedback").innerHTML='<div class="wrong">Écris : article + nominatif + génitif complet</div>';return}
+ if(selectedDeclension===null){document.getElementById("feedback").innerHTML='<div class="wrong">Choisis aussi la déclinaison.</div>';return}
+ const a=normalizeGreek(user.article)===normalizeGreek(current.article);
+ const w=normalizeGreek(user.word)===normalizeGreek(current.word);
+ const g=normalizeGreek(user.genitive)===normalizeGreek(current.genitive);
+ const d=selectedDeclension===current.declension;
+ const ok=a&&w&&g&&d; answered=true; let html="";
+ html+=a?'<div class="correct">✓ Article</div>':'<div class="wrong">✗ Article</div>';
+ html+=w?'<div class="correct">✓ Nominatif</div>':'<div class="wrong">✗ Nominatif</div>';
+ html+=g?'<div class="correct">✓ Génitif</div>':'<div class="wrong">✗ Génitif</div>';
+ html+=d?'<div class="correct">✓ '+current.declension+'e déclinaison</div>':'<div class="wrong">✗ Déclinaison</div>';
+ const ws=wordStats(current.id);
+ if(ok){ws.correct++;saved.stats.correct++;html='<div class="correct">✓ Bonne réponse !</div><br>'+html}
+ else{ws.wrong++;saved.stats.wrong++;html+='<div class="correction"><strong>'+current.article+' '+current.word+' '+current.genitive+'</strong><br>'+current.declension+'e déclinaison</div>'}
+ finishQuestion(html);
 }
-
-
-/* =====================================================
-   AFFICHAGE
-   ===================================================== */
-
-function showWord() {
-
-  current = chooseWord();
-
-  recentIds.push(current.id);
-
-  if (recentIds.length > 3) {
-    recentIds.shift();
-  }
-
-  answered = false;
-  selectedDeclension = null;
-
-  document
-    .getElementById("question")
-    .textContent =
-    current.fr;
-
-  document
-    .getElementById("category")
-    .textContent =
-    categoryName(current.type);
-
-  document
-    .getElementById("answer")
-    .value = "";
-
-  document
-    .getElementById("feedback")
-    .innerHTML = "";
-
-  document
-    .getElementById("mainButton")
-    .textContent =
-    "Vérifier";
-
-  document
-    .getElementById("skipButton")
-    .style.display =
-    "block";
-
-
-  const nounLike =
-    current.type === "noun"
-    ||
-    current.type === "proper";
-
-
-  document
-    .getElementById("declensions")
-    .style.display =
-    nounLike
-      ? "flex"
-      : "none";
-
-
-  for (let i=1; i<=3; i++) {
-
-    document
-      .getElementById("decl"+i)
-      .classList.remove("selected");
-
-  }
-
-
-  document
-    .getElementById("answer")
-    .focus();
-
-  updateStats();
+function checkPreposition(){
+ const user=normalizeGreek(document.getElementById("answer").value);
+ if(!user)return;
+ if(!selectedCases.length){
+   document.getElementById("feedback").innerHTML='<div class="wrong">Choisis aussi le ou les cas.</div>';
+   return;
+ }
+ const wordOK=user===normalizeGreek(current.answer);
+ const expected=(current.cases||[]).slice().sort().join(",");
+ const chosen=selectedCases.slice().sort().join(",");
+ const casesOK=chosen===expected;
+ answered=true;
+ const ws=wordStats(current.id);
+ let html="";
+ html+=wordOK?'<div class="correct">✓ Préposition</div>':'<div class="wrong">✗ Préposition</div>';
+ html+=casesOK?'<div class="correct">✓ Cas</div>':'<div class="wrong">✗ Cas</div>';
+ if(wordOK&&casesOK){
+   ws.correct++;saved.stats.correct++;
+   html='<div class="correct">✓ Bonne réponse !</div><br>'+html;
+ } else {
+   ws.wrong++;saved.stats.wrong++;
+   const labels={gen:"génitif",dat:"datif",acc:"accusatif"};
+   const expectedCases=(current.cases||[]).map(c=>labels[c]).join(" + ");
+   html+='<div class="correction"><strong>'+current.answer+'</strong><br>Construction : <strong>'+expectedCases+'</strong></div>';
+ }
+ finishQuestion(html);
 }
-
-
-/* =====================================================
-   DÉCLINAISON
-   ===================================================== */
-
-function selectDeclension(n) {
-
-  selectedDeclension = n;
-
-  for (let i=1; i<=3; i++) {
-
-    document
-      .getElementById("decl"+i)
-      .classList.remove("selected");
-
-  }
-
-  document
-    .getElementById("decl"+n)
-    .classList.add("selected");
-
+function checkSimple(){
+ const user=normalizeGreek(document.getElementById("answer").value);if(!user)return;
+ const ok=user===normalizeGreek(current.answer);answered=true;const ws=wordStats(current.id);let html="";
+ if(ok){ws.correct++;saved.stats.correct++;html='<div class="correct">✓ Bonne réponse !</div>'}
+ else{ws.wrong++;saved.stats.wrong++;html='<div class="wrong">✗ À revoir</div><div class="correction"><strong>'+current.answer+'</strong></div>'}
+ finishQuestion(html);
 }
-
-
-/* =====================================================
-   ANALYSE D'UN NOM
-
-   Exemple :
-
-   ὁ ἱππος ἱππου
-   ===================================================== */
-
-function parseNoun(text) {
-
-  const parts =
-    text
-      .trim()
-      .replace(/\s+/g," ")
-      .split(" ");
-
-  if (parts.length !== 3) {
-    return null;
-  }
-
-  return {
-    article: parts[0],
-    word: parts[1],
-    genitive: parts[2]
-  };
+function skipWord(){
+ if(answered)return;answered=true;const ws=wordStats(current.id);ws.skipped++;saved.stats.skipped++;
+ let ans;
+ if(current.type==="noun"){
+   ans=current.article+" "+current.word+" "+current.genitive+"<br>"+current.declension+"e déclinaison";
+ } else if(current.type==="preposition"){
+   const labels={gen:"génitif",dat:"datif",acc:"accusatif"};
+   ans=current.answer+"<br>Construction : "+(current.cases||[]).map(c=>labels[c]).join(" + ");
+ } else {
+   ans=current.answer;
+ }
+ finishQuestion('<div class="correction"><strong>'+ans+'</strong></div>');
 }
-
-
-/* =====================================================
-   ACTION PRINCIPALE
-   ===================================================== */
-
-function mainAction() {
-
-  if (answered) {
-    showWord();
-  }
-
-  else {
-    checkAnswer();
-  }
-
+function finishQuestion(html){
+ document.getElementById("feedback").innerHTML=html;
+ document.getElementById("mainButton").textContent="Mot suivant";
+ document.getElementById("skipButton").style.display="none";
+ saveProgress();updateStats();
 }
-
-
-/* =====================================================
-   VÉRIFICATION
-   ===================================================== */
-
-function checkAnswer() {
-
-  const nounLike =
-    current.type === "noun"
-    ||
-    current.type === "proper";
-
-
-  if (nounLike) {
-
-    checkNoun();
-
-  }
-
-  else {
-
-    checkSimple();
-
-  }
-
+function updateStats(){
+ const total=saved.stats.correct+saved.stats.wrong+saved.stats.skipped;
+ const success=total?Math.round(saved.stats.correct/total*100):0;
+ document.getElementById("stats").textContent=saved.stats.correct+" réussis · "+saved.stats.wrong+" erreurs · "+saved.stats.skipped+" passés · "+success+"% · "+activeLexicon().length+" cartes";
 }
-
-
-/* =====================================================
-   VÉRIFICATION NOM
-   ===================================================== */
-
-function checkNoun() {
-
-  const user =
-    parseNoun(
-      document
-        .getElementById("answer")
-        .value
-    );
-
-
-  if (!user) {
-
-    document
-      .getElementById("feedback")
-      .innerHTML =
-      `
-      <div class="wrong">
-      Écris :
-      article + nominatif + génitif complet
-      </div>
-      `;
-
-    return;
-  }
-
-
-  if (selectedDeclension === null) {
-
-    document
-      .getElementById("feedback")
-      .innerHTML =
-      `
-      <div class="wrong">
-      Choisis aussi la déclinaison.
-      </div>
-      `;
-
-    return;
-  }
-
-
-  const articleOK =
-    normalizeGreek(user.article)
-    ===
-    normalizeGreek(current.article);
-
-  const wordOK =
-    normalizeGreek(user.word)
-    ===
-    normalizeGreek(current.word);
-
-  const genitiveOK =
-    normalizeGreek(user.genitive)
-    ===
-    normalizeGreek(current.genitive);
-
-  const declensionOK =
-    selectedDeclension
-    ===
-    current.declension;
-
-
-  const everythingOK =
-    articleOK
-    &&
-    wordOK
-    &&
-    genitiveOK
-    &&
-    declensionOK;
-
-
-  answered = true;
-
-  let html = "";
-
-
-  html += articleOK
-    ? `<div class="correct">✓ Article</div>`
-    : `<div class="wrong">✗ Article</div>`;
-
-
-  html += wordOK
-    ? `<div class="correct">✓ Nominatif</div>`
-    : `<div class="wrong">✗ Nominatif</div>`;
-
-
-  html += genitiveOK
-    ? `<div class="correct">✓ Génitif</div>`
-    : `<div class="wrong">✗ Génitif</div>`;
-
-
-  html += declensionOK
-    ? `<div class="correct">
-       ✓ ${current.declension}e déclinaison
-       </div>`
-    : `<div class="wrong">
-       ✗ Déclinaison
-       </div>`;
-
-
-  const ws =
-    wordStats(current.id);
-
-
-  if (everythingOK) {
-
-    ws.correct++;
-    saved.stats.correct++;
-
-    html =
-      `<div class="correct">
-       ✓ Bonne réponse !
-       </div><br>`
-       + html;
-
-  }
-
-  else {
-
-    ws.wrong++;
-    saved.stats.wrong++;
-
-    html +=
-      `
-      <div class="correction">
-
-      <strong>
-      ${current.article}
-      ${current.word}
-      ${current.genitive}
-      </strong>
-
-      <br>
-
-      ${current.declension}e déclinaison
-
-      </div>
-      `;
-
-  }
-
-
-  finishQuestion(html);
-}
-
-
-/* =====================================================
-   VERBES / ADJECTIFS / ETC.
-   ===================================================== */
-
-function checkSimple() {
-
-  const user =
-    normalizeGreek(
-      document
-        .getElementById("answer")
-        .value
-    );
-
-  if (!user) {
-    return;
-  }
-
-
-  const correct =
-    user
-    ===
-    normalizeGreek(current.answer);
-
-
-  answered = true;
-
-  const ws =
-    wordStats(current.id);
-
-  let html;
-
-
-  if (correct) {
-
-    ws.correct++;
-    saved.stats.correct++;
-
-    html =
-      `
-      <div class="correct">
-      ✓ Bonne réponse !
-      </div>
-      `;
-
-  }
-
-  else {
-
-    ws.wrong++;
-    saved.stats.wrong++;
-
-    html =
-      `
-      <div class="wrong">
-      ✗ À revoir
-      </div>
-
-      <div class="correction">
-      <strong>
-      ${current.answer}
-      </strong>
-      </div>
-      `;
-
-  }
-
-
-  finishQuestion(html);
-}
-
-
-/* =====================================================
-   JE PASSE
-   ===================================================== */
-
-function skipWord() {
-
-  if (answered) {
-    return;
-  }
-
-  answered = true;
-
-  const ws =
-    wordStats(current.id);
-
-  ws.skipped++;
-  saved.stats.skipped++;
-
-
-  let answer;
-
-
-  if (
-    current.type === "noun"
-    ||
-    current.type === "proper"
-  ) {
-
-    answer =
-      `
-      ${current.article}
-      ${current.word}
-      ${current.genitive}
-      <br>
-      ${current.declension}e déclinaison
-      `;
-
-  }
-
-  else {
-
-    answer =
-      current.answer;
-
-  }
-
-
-  const html =
-    `
-    <div class="correction">
-
-    <strong>
-    ${answer}
-    </strong>
-
-    </div>
-    `;
-
-
-  finishQuestion(html);
-}
-
-
-/* =====================================================
-   FIN DE QUESTION
-   ===================================================== */
-
-function finishQuestion(html) {
-
-  document
-    .getElementById("feedback")
-    .innerHTML =
-    html;
-
-  document
-    .getElementById("mainButton")
-    .textContent =
-    "Mot suivant";
-
-  document
-    .getElementById("skipButton")
-    .style.display =
-    "none";
-
-  saveProgress();
-  updateStats();
-}
-
-
-/* =====================================================
-   STATISTIQUES
-   ===================================================== */
-
-function updateStats() {
-
-  const total =
-    saved.stats.correct
-    +
-    saved.stats.wrong
-    +
-    saved.stats.skipped;
-
-
-  let success = 0;
-
-  if (total > 0) {
-
-    success =
-      Math.round(
-        saved.stats.correct
-        /
-        total
-        *
-        100
-      );
-
-  }
-
-
-  document
-    .getElementById("stats")
-    .textContent =
-
-    `${saved.stats.correct} réussis · `
-    +
-    `${saved.stats.wrong} erreurs · `
-    +
-    `${saved.stats.skipped} passés · `
-    +
-    `${success}%`;
-
-}
-
-
-/* =====================================================
-   TOUCHE ENTRÉE
-   ===================================================== */
-
-document
-  .getElementById("answer")
-  .addEventListener(
-    "keydown",
-    function(event) {
-
-      if (event.key === "Enter") {
-        mainAction();
-      }
-
-    }
-  );
-
-
+document.getElementById("answer").addEventListener("keydown",e=>{if(e.key==="Enter")mainAction()});
 showWord();
-
 </script>
-
 </body>
 </html>
