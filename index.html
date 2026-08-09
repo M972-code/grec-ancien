@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+>
+
+<title>Grec</title>
 
 <style>
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   margin: 0;
-  padding: 20px;
+  padding: 8px;
   background: #f5f5f7;
   color: #1d1d1f;
 }
@@ -17,42 +25,44 @@ body {
   max-width: 520px;
   margin: 0 auto;
   background: white;
-  padding: 14px 20px;
-  border-radius: 20px;
-  box-shadow: 0 5px 25px rgba(0,0,0,.08);
-}
-
-h1 {
-  margin-top: 0;
-  font-size: 30px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.07);
 }
 
 .question {
-  margin: 10px 0 15px;
-  font-size: 34px;
+  margin: 4px 0 14px;
+  font-size: 30px;
   font-weight: 700;
+}
+
+.category {
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 5px;
 }
 
 input {
   width: 100%;
   box-sizing: border-box;
-  padding: 16px;
-  font-size: 24px;
-  border-radius: 12px;
+  padding: 13px;
+  font-size: 23px;
+  border-radius: 11px;
   border: 1px solid #bbb;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .declensions {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 7px;
+  margin-bottom: 10px;
 }
 
 .declensions button {
   flex: 1;
   background: #e5e5ea;
   color: #111;
+  padding: 10px;
 }
 
 .declensions button.selected {
@@ -63,23 +73,23 @@ input {
 button {
   width: 100%;
   border: none;
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 18px;
-  margin-bottom: 10px;
+  border-radius: 11px;
+  padding: 12px;
+  font-size: 17px;
+  margin-bottom: 8px;
   background: #007aff;
   color: white;
 }
 
-button.secondary {
+button.skip {
   background: #e5e5ea;
-  color: #111;
+  color: #333;
 }
 
 .feedback {
-  margin-top: 20px;
-  line-height: 1.7;
-  font-size: 18px;
+  margin-top: 10px;
+  line-height: 1.5;
+  font-size: 17px;
 }
 
 .correct {
@@ -93,147 +103,1210 @@ button.secondary {
 }
 
 .correction {
-  margin-top: 15px;
+  margin-top: 10px;
   background: #f5f5f7;
-  border-radius: 12px;
-  padding: 15px;
-  font-size: 20px;
+  border-radius: 10px;
+  padding: 11px;
+  font-size: 19px;
 }
 
 .stats {
-  margin-top: 25px;
-  padding-top: 15px;
+  margin-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid #eee;
-  color: #666;
+  color: #777;
+  font-size: 13px;
 }
+
 </style>
 </head>
+
 
 <body>
 
 <div class="app">
 
-<div id="question" class="question"></div>
+  <div id="category" class="category"></div>
 
-<input
-  id="answer"
-  type="text"
-  placeholder="Réponse en grec"
-  autocomplete="off"
-  autocapitalize="none"
-  spellcheck="false"
->
+  <div id="question" class="question"></div>
 
-<div class="declensions">
-  <button id="decl1" onclick="selectDeclension(1)">1re</button>
-  <button id="decl2" onclick="selectDeclension(2)">2e</button>
-  <button id="decl3" onclick="selectDeclension(3)">3e</button>
+  <input
+    id="answer"
+    type="text"
+    placeholder="Réponse en grec"
+    autocomplete="off"
+    autocapitalize="none"
+    spellcheck="false"
+  >
+
+  <div id="declensions" class="declensions">
+
+    <button
+      id="decl1"
+      onclick="selectDeclension(1)">
+      1re
+    </button>
+
+    <button
+      id="decl2"
+      onclick="selectDeclension(2)">
+      2e
+    </button>
+
+    <button
+      id="decl3"
+      onclick="selectDeclension(3)">
+      3e
+    </button>
+
+  </div>
+
+  <button
+    id="mainButton"
+    onclick="mainAction()">
+    Vérifier
+  </button>
+
+  <button
+    id="skipButton"
+    class="skip"
+    onclick="skipWord()">
+    Je passe
+  </button>
+
+  <div
+    id="feedback"
+    class="feedback">
+  </div>
+
+  <div
+    id="stats"
+    class="stats">
+  </div>
+
 </div>
 
-<button onclick="checkAnswer()">Vérifier</button>
-
-<button class="secondary" onclick="nextWord()">
-  Mot suivant
-</button>
-
-<div id="feedback" class="feedback"></div>
-<div id="stats" class="stats"></div>
-
-</div>
 
 <script>
 
+/* =====================================================
+   LEXIQUE — CHAPITRE Δ
+   ===================================================== */
+
 const lexicon = [
-  {
-    fr: "la mer",
-    article: "ἡ",
-    word: "θάλασσα",
-    genitive: "θαλάσσης",
-    declension: 1
-  },
-  {
-    fr: "le cheval",
-    article: "ὁ",
-    word: "ἵππος",
-    genitive: "ἵππου",
-    declension: 2
-  },
-  {
-    fr: "le lion",
-    article: "ὁ",
-    word: "λέων",
-    genitive: "λέοντος",
-    declension: 3
-  },
-  {
-    fr: "le loup",
-    article: "ὁ",
-    word: "λύκος",
-    genitive: "λύκου",
-    declension: 2
-  },
-  {
-    fr: "le taureau",
-    article: "ὁ",
-    word: "ταῦρος",
-    genitive: "ταύρου",
-    declension: 2
-  },
-  {
-    fr: "l'eau",
-    article: "τό",
-    word: "ὕδωρ",
-    genitive: "ὕδατος",
-    declension: 3
-  },
-  {
-    fr: "la ville",
-    article: "ἡ",
-    word: "πόλις",
-    genitive: "πόλεως",
-    declension: 3
-  },
-  {
-    fr: "le cygne",
-    article: "ὁ",
-    word: "κύκνος",
-    genitive: "κύκνου",
-    declension: 2
-  },
-  {
-    fr: "le chien",
-    article: "ὁ",
-    word: "κύων",
-    genitive: "κυνός",
-    declension: 3
-  }
+
+/* ---------- NOMS ---------- */
+
+{
+ id:"haima",
+ fr:"le sang",
+ type:"noun",
+ article:"τό",
+ word:"αἷμα",
+ genitive:"αἵματος",
+ declension:3
+},
+
+{
+ id:"alopex",
+ fr:"le renard",
+ type:"noun",
+ article:"ἡ",
+ word:"ἀλώπηξ",
+ genitive:"ἀλώπεκος",
+ declension:3
+},
+
+{
+ id:"arachne",
+ fr:"l'araignée",
+ type:"noun",
+ article:"ἡ",
+ word:"ἀράχνη",
+ genitive:"ἀράχνης",
+ declension:1
+},
+
+{
+ id:"harpyia",
+ fr:"la harpie",
+ type:"noun",
+ article:"ἡ",
+ word:"ἅρπυια",
+ genitive:"ἁρπυίας",
+ declension:1
+},
+
+{
+ id:"batrachos",
+ fr:"la grenouille",
+ type:"noun",
+ article:"ὁ",
+ word:"βάτραχος",
+ genitive:"βατράχου",
+ declension:2
+},
+
+{
+ id:"bios",
+ fr:"la vie",
+ type:"noun",
+ article:"ὁ",
+ word:"βίος",
+ genitive:"βίου",
+ declension:2
+},
+
+{
+ id:"delphis",
+ fr:"le dauphin",
+ type:"noun",
+ article:"ὁ",
+ word:"δελφίς",
+ genitive:"δελφῖνος",
+ declension:3
+},
+
+{
+ id:"drakaina",
+ fr:"la dragonne",
+ type:"noun",
+ article:"ἡ",
+ word:"δράκαινα",
+ genitive:"δρακαίνης",
+ declension:1
+},
+
+{
+ id:"elaphos",
+ fr:"le cerf",
+ type:"noun",
+ article:"ὁ",
+ word:"ἔλαφος",
+ genitive:"ἐλάφου",
+ declension:2
+},
+
+{
+ id:"elephas",
+ fr:"l'éléphant",
+ type:"noun",
+ article:"ὁ",
+ word:"ἐλέφας",
+ genitive:"ἐλέφαντος",
+ declension:3
+},
+
+{
+ id:"zoon",
+ fr:"l'animal",
+ type:"noun",
+ article:"τό",
+ word:"ζῷον",
+ genitive:"ζῴου",
+ declension:2
+},
+
+{
+ id:"thalassa",
+ fr:"la mer",
+ type:"noun",
+ article:"ἡ",
+ word:"θάλασσα",
+ genitive:"θαλάσσης",
+ declension:1
+},
+
+{
+ id:"hippopotamos",
+ fr:"l'hippopotame",
+ type:"noun",
+ article:"ὁ",
+ word:"ἱπποπόταμος",
+ genitive:"ἱπποποτάμου",
+ declension:2
+},
+
+{
+ id:"hippos",
+ fr:"le cheval",
+ type:"noun",
+ article:"ὁ",
+ word:"ἵππος",
+ genitive:"ἵππου",
+ declension:2
+},
+
+{
+ id:"ichthys",
+ fr:"le poisson",
+ type:"noun",
+ article:"ὁ",
+ word:"ἰχθύς",
+ genitive:"ἰχθύος",
+ declension:3
+},
+
+{
+ id:"karkinos",
+ fr:"le crabe",
+ type:"noun",
+ article:"ὁ",
+ word:"καρκίνος",
+ genitive:"καρκίνου",
+ declension:2
+},
+
+{
+ id:"karcharias",
+ fr:"le requin",
+ type:"noun",
+ article:"ὁ",
+ word:"καρχαρίας",
+ genitive:"καρχαρίου",
+ declension:1
+},
+
+{
+ id:"kategoroumenon",
+ fr:"le prédicat",
+ type:"noun",
+ article:"τό",
+ word:"κατηγορούμενον",
+ genitive:"κατηγορουμένου",
+ declension:2
+},
+
+{
+ id:"kentauros",
+ fr:"le centaure",
+ type:"noun",
+ article:"ὁ",
+ word:"κένταυρος",
+ genitive:"κενταύρου",
+ declension:2
+},
+
+{
+ id:"krokodeilos",
+ fr:"le crocodile",
+ type:"noun",
+ article:"ὁ",
+ word:"κροκόδειλος",
+ genitive:"κροκοδείλου",
+ declension:2
+},
+
+{
+ id:"kyklops",
+ fr:"le cyclope",
+ type:"noun",
+ article:"ὁ",
+ word:"κύκλωψ",
+ genitive:"κύκλωπος",
+ declension:3
+},
+
+{
+ id:"kyknos",
+ fr:"le cygne",
+ type:"noun",
+ article:"ὁ",
+ word:"κύκνος",
+ genitive:"κύκνου",
+ declension:2
+},
+
+{
+ id:"kyon",
+ fr:"le chien",
+ type:"noun",
+ article:"ὁ",
+ word:"κύων",
+ genitive:"κυνός",
+ declension:3
+},
+
+{
+ id:"leon",
+ fr:"le lion",
+ type:"noun",
+ article:"ὁ",
+ word:"λέων",
+ genitive:"λέοντος",
+ declension:3
+},
+
+{
+ id:"limne",
+ fr:"le lac",
+ type:"noun",
+ article:"ἡ",
+ word:"λίμνη",
+ genitive:"λίμνης",
+ declension:1
+},
+
+{
+ id:"lykos",
+ fr:"le loup",
+ type:"noun",
+ article:"ὁ",
+ word:"λύκος",
+ genitive:"λύκου",
+ declension:2
+},
+
+{
+ id:"melissa",
+ fr:"l'abeille",
+ type:"noun",
+ article:"ἡ",
+ word:"μέλισσα",
+ genitive:"μελίσσης",
+ declension:1
+},
+
+{
+ id:"mythos",
+ fr:"le mythe",
+ type:"noun",
+ article:"ὁ",
+ word:"μῦθος",
+ genitive:"μύθου",
+ declension:2
+},
+
+{
+ id:"onos",
+ fr:"l'âne",
+ type:"noun",
+ article:"ὁ",
+ word:"ὄνος",
+ genitive:"ὄνου",
+ declension:2
+},
+
+{
+ id:"ornis",
+ fr:"l'oiseau",
+ type:"noun",
+ article:"ἡ",
+ word:"ὄρνις",
+ genitive:"ὄρνιθος",
+ declension:3
+},
+
+{
+ id:"ophis",
+ fr:"le serpent",
+ type:"noun",
+ article:"ὁ",
+ word:"ὄφις",
+ genitive:"ὄφεως",
+ declension:3
+},
+
+{
+ id:"paradeigma",
+ fr:"l'exemple",
+ type:"noun",
+ article:"τό",
+ word:"παράδειγμα",
+ genitive:"παραδείγματος",
+ declension:3
+},
+
+{
+ id:"polis",
+ fr:"la ville",
+ type:"noun",
+ article:"ἡ",
+ word:"πόλις",
+ genitive:"πόλεως",
+ declension:3
+},
+
+{
+ id:"potamos",
+ fr:"le fleuve",
+ type:"noun",
+ article:"ὁ",
+ word:"ποταμός",
+ genitive:"ποταμοῦ",
+ declension:2
+},
+
+{
+ id:"pous",
+ fr:"le pied",
+ type:"noun",
+ article:"ὁ",
+ word:"πούς",
+ genitive:"ποδός",
+ declension:3
+},
+
+{
+ id:"probaton",
+ fr:"le mouton",
+ type:"noun",
+ article:"τό",
+ word:"πρόβατον",
+ genitive:"προβάτου",
+ declension:2
+},
+
+{
+ id:"ptosis",
+ fr:"le cas grammatical",
+ type:"noun",
+ article:"ἡ",
+ word:"πτῶσις",
+ genitive:"πτώσεως",
+ declension:3
+},
+
+{
+ id:"rhema",
+ fr:"le verbe",
+ type:"noun",
+ article:"τό",
+ word:"ῥῆμα",
+ genitive:"ῥήματος",
+ declension:3
+},
+
+{
+ id:"sauros",
+ fr:"le lézard",
+ type:"noun",
+ article:"ὁ",
+ word:"σαῦρος",
+ genitive:"σαύρου",
+ declension:2
+},
+
+{
+ id:"seiren",
+ fr:"la sirène",
+ type:"noun",
+ article:"ἡ",
+ word:"σειρήν",
+ genitive:"σειρῆνος",
+ declension:3
+},
+
+{
+ id:"tauros",
+ fr:"le taureau",
+ type:"noun",
+ article:"ὁ",
+ word:"ταῦρος",
+ genitive:"ταύρου",
+ declension:2
+},
+
+{
+ id:"tigris",
+ fr:"le tigre",
+ type:"noun",
+ article:"ὁ",
+ word:"τίγρις",
+ genitive:"τίγριδος",
+ declension:3
+},
+
+{
+ id:"hydor",
+ fr:"l'eau",
+ type:"noun",
+ article:"τό",
+ word:"ὕδωρ",
+ genitive:"ὕδατος",
+ declension:3
+},
+
+{
+ id:"hypokeimenon",
+ fr:"le sujet grammatical",
+ type:"noun",
+ article:"τό",
+ word:"ὑποκείμενον",
+ genitive:"ὑποκειμένου",
+ declension:2
+},
+
+{
+ id:"phalaina",
+ fr:"la baleine",
+ type:"noun",
+ article:"ἡ",
+ word:"φάλαινα",
+ genitive:"φάλαινας",
+ declension:1
+},
+
+{
+ id:"chelone",
+ fr:"la tortue",
+ type:"noun",
+ article:"ἡ",
+ word:"χελώνη",
+ genitive:"χελώνης",
+ declension:1
+},
+
+
+/* ---------- ADJECTIFS ---------- */
+
+{
+ id:"agrios",
+ fr:"sauvage",
+ type:"adjective",
+ answer:"ἄγριος α ον"
+},
+
+{
+ id:"amphibios",
+ fr:"amphibie",
+ type:"adjective",
+ answer:"ἀμφίβιος ον"
+},
+
+{
+ id:"anaimos",
+ fr:"exsangue / sans sang",
+ type:"adjective",
+ answer:"ἄναιμος ον"
+},
+
+{
+ id:"anthropomorphos",
+ fr:"anthropomorphe",
+ type:"adjective",
+ answer:"ἀνθρωπόμορφος ον"
+},
+
+{
+ id:"apous",
+ fr:"sans pieds",
+ type:"adjective",
+ answer:"ἄπους ουν"
+},
+
+{
+ id:"dipous",
+ fr:"bipède",
+ type:"adjective",
+ answer:"δίπους ουν"
+},
+
+{
+ id:"enaimos",
+ fr:"pourvu de sang",
+ type:"adjective",
+ answer:"ἔναιμος ον"
+},
+
+{
+ id:"enydros",
+ fr:"aquatique",
+ type:"adjective",
+ answer:"ἔνυδρος ον"
+},
+
+{
+ id:"herpystikos",
+ fr:"rampant / reptilien",
+ type:"adjective",
+ answer:"ἑρπυστικός ή όν"
+},
+
+{
+ id:"hemeros",
+ fr:"domestique / apprivoisé",
+ type:"adjective",
+ answer:"ἥμερος α ον"
+},
+
+{
+ id:"hemisys",
+ fr:"demi / moitié",
+ type:"adjective",
+ answer:"ἥμισυς ἡμίσεια ἥμισυ"
+},
+
+{
+ id:"thalassios",
+ fr:"marin",
+ type:"adjective",
+ answer:"θαλάσσιος α ον"
+},
+
+{
+ id:"limnaios",
+ fr:"lacustre",
+ type:"adjective",
+ answer:"λιμναῖος α ον"
+},
+
+{
+ id:"mythikos",
+ fr:"mythique",
+ type:"adjective",
+ answer:"μυθικός ή όν"
+},
+
+{
+ id:"oligos",
+ fr:"peu nombreux / peu",
+ type:"adjective",
+ answer:"ὀλίγος η ον"
+},
+
+{
+ id:"onomastikos",
+ fr:"nominatif",
+ type:"adjective",
+ answer:"ὀνομαστικός ή όν"
+},
+
+{
+ id:"pezos",
+ fr:"terrestre / allant à pied",
+ type:"adjective",
+ answer:"πεζός ή όν"
+},
+
+{
+ id:"politikos",
+ fr:"politique",
+ type:"adjective",
+ answer:"πολιτικός ή όν"
+},
+
+{
+ id:"polypous",
+ fr:"qui a beaucoup de pieds",
+ type:"adjective",
+ answer:"πολύπους ουν"
+},
+
+{
+ id:"polys",
+ fr:"nombreux / beaucoup",
+ type:"adjective",
+ answer:"πολύς πολλή πολύ"
+},
+
+{
+ id:"potamios",
+ fr:"fluvial",
+ type:"adjective",
+ answer:"ποτάμιος α ον"
+},
+
+{
+ id:"ptenos",
+ fr:"ailé / volant",
+ type:"adjective",
+ answer:"πτηνός ή όν"
+},
+
+{
+ id:"tetrapous",
+ fr:"quadrupède",
+ type:"adjective",
+ answer:"τετράπους ουν"
+},
+
+{
+ id:"chersaios",
+ fr:"terrestre",
+ type:"adjective",
+ answer:"χερσαῖος α ον"
+},
+
+
+/* ---------- VERBES ---------- */
+
+{
+ id:"badizo",
+ fr:"marcher",
+ type:"verb",
+ answer:"βαδίζω"
+},
+
+{
+ id:"herpo",
+ fr:"ramper",
+ type:"verb",
+ answer:"ἕρπω"
+},
+
+{
+ id:"kolymbao",
+ fr:"nager",
+ type:"verb",
+ answer:"κολυμβάω"
+},
+
+{
+ id:"lego",
+ fr:"dire",
+ type:"verb",
+ answer:"λέγω"
+},
+
+{
+ id:"petomai",
+ fr:"voler",
+ type:"verb",
+ answer:"πέτομαι"
+},
+
+{
+ id:"pedao",
+ fr:"sauter",
+ type:"verb",
+ answer:"πηδάω"
+},
+
+{
+ id:"poieo",
+ fr:"faire",
+ type:"verb",
+ answer:"ποιέω"
+},
+
+{
+ id:"trecho",
+ fr:"courir",
+ type:"verb",
+ answer:"τρέχω"
+},
+
+
+/* ---------- ADVERBES ---------- */
+
+{
+ id:"eti",
+ fr:"encore",
+ type:"adverb",
+ answer:"ἔτι"
+},
+
+{
+ id:"monon",
+ fr:"seulement",
+ type:"adverb",
+ answer:"μόνον"
+},
+
+
+/* ---------- CONJONCTIONS ---------- */
+
+{
+ id:"eite",
+ fr:"soit... soit / ou... ou",
+ type:"conjunction",
+ answer:"εἴτε εἴτε"
+},
+
+{
+ id:"hosper",
+ fr:"comme / de même que",
+ type:"conjunction",
+ answer:"ὥσπερ"
+},
+
+
+/* ---------- NOMS PROPRES : FAIBLE FRÉQUENCE ---------- */
+
+{
+ id:"aristoteles",
+ fr:"Aristote",
+ type:"proper",
+ article:"ὁ",
+ word:"Ἀριστοτέλης",
+ genitive:"Ἀριστοτέλους",
+ declension:3
+},
+
+{
+ id:"parthenope",
+ fr:"Parthénope",
+ type:"proper",
+ article:"ἡ",
+ word:"Παρθενόπη",
+ genitive:"Παρθενόπης",
+ declension:1
+},
+
+{
+ id:"sphinx",
+ fr:"le Sphinx",
+ type:"proper",
+ article:"ἡ",
+ word:"Σφίγξ",
+ genitive:"Σφιγγός",
+ declension:3
+}
+
 ];
-  
-let currentIndex = Math.floor(Math.random() * lexicon.length);
+
+
+/* =====================================================
+   SAUVEGARDE
+   ===================================================== */
+
+const STORAGE_KEY = "grecAncienChapitreDeltaV1";
+
+let saved = JSON.parse(
+  localStorage.getItem(STORAGE_KEY) || "{}"
+);
+
+if (!saved.words) saved.words = {};
+if (!saved.stats) {
+  saved.stats = {
+    correct: 0,
+    wrong: 0,
+    skipped: 0
+  };
+}
+
+function saveProgress() {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(saved)
+  );
+}
+
+
+/* =====================================================
+   ÉTAT
+   ===================================================== */
+
+let current = null;
 let selectedDeclension = null;
-let score = 0;
-let attempts = 0;
 let answered = false;
 
-function normalizeGreek(text) {
-  let chars = text.normalize("NFD");
+let recentIds = [];
 
-  chars = chars.replace(
+
+/* =====================================================
+   NORMALISATION
+
+   On enlève :
+   - accent aigu
+   - accent grave
+   - circonflexe
+
+   On CONSERVE :
+   - esprit doux
+   - esprit rude
+   - iota souscrit
+   - tréma
+
+   Donc les accents sont facultatifs,
+   mais les esprits restent obligatoires.
+   ===================================================== */
+
+function normalizeGreek(text) {
+
+  let s = text
+    .normalize("NFD");
+
+  s = s.replace(
     /[\u0300\u0301\u0340\u0341\u0342]/g,
     ""
   );
 
-  return chars
+  s = s
     .normalize("NFC")
     .toLowerCase()
-    .trim()
-    .replace(/\s+/g, " ");
+
+    /* ponctuation facultative */
+    .replace(/[,\.;·]/g, " ")
+
+    /* tirets facultatifs */
+    .replace(/[-–—]/g, " ")
+
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return s;
 }
 
-function parseAnswer(text) {
-  const parts = text.trim().replace(/\s+/g, " ").split(" ");
 
-  if (parts.length !== 3) return null;
+/* =====================================================
+   PROGRESSION PAR MOT
+   ===================================================== */
+
+function wordStats(id) {
+
+  if (!saved.words[id]) {
+
+    saved.words[id] = {
+      correct: 0,
+      wrong: 0,
+      skipped: 0
+    };
+
+  }
+
+  return saved.words[id];
+}
+
+
+/* =====================================================
+   POIDS DE RÉVISION
+   ===================================================== */
+
+function getWeight(item) {
+
+  const s = wordStats(item.id);
+
+  /*
+    Noms propres :
+    environ 4 à 5 fois moins fréquents.
+  */
+
+  let base =
+    item.type === "proper"
+      ? 0.22
+      : 1;
+
+
+  /*
+    Erreur = mot plus fréquent.
+    Je passe = encore plus fréquent.
+  */
+
+  let difficulty =
+    1
+    + (s.wrong * 1.8)
+    + (s.skipped * 3);
+
+
+  /*
+    Plusieurs bonnes réponses
+    diminuent progressivement la fréquence.
+  */
+
+  let mastery =
+    1 + (s.correct * 0.5);
+
+
+  let weight =
+    base * difficulty / mastery;
+
+
+  /*
+    On évite de revoir immédiatement
+    les tout derniers mots.
+  */
+
+  if (recentIds.includes(item.id)) {
+    weight *= 0.18;
+  }
+
+
+  /*
+    Un mot très difficile reste quand même
+    susceptible de revenir rapidement.
+  */
+
+  return Math.max(weight, 0.03);
+}
+
+
+/* =====================================================
+   TIRAGE PONDÉRÉ
+   ===================================================== */
+
+function chooseWord() {
+
+  const weights =
+    lexicon.map(getWeight);
+
+  const total =
+    weights.reduce(
+      (a,b) => a+b,
+      0
+    );
+
+  let r =
+    Math.random() * total;
+
+  for (let i = 0; i < lexicon.length; i++) {
+
+    r -= weights[i];
+
+    if (r <= 0) {
+      return lexicon[i];
+    }
+
+  }
+
+  return lexicon[0];
+}
+
+
+/* =====================================================
+   CATÉGORIE
+   ===================================================== */
+
+function categoryName(type) {
+
+  switch(type) {
+
+    case "noun":
+      return "Nom";
+
+    case "proper":
+      return "Nom propre";
+
+    case "adjective":
+      return "Adjectif";
+
+    case "verb":
+      return "Verbe";
+
+    case "adverb":
+      return "Adverbe";
+
+    case "conjunction":
+      return "Conjonction";
+
+    default:
+      return "";
+
+  }
+
+}
+
+
+/* =====================================================
+   AFFICHAGE
+   ===================================================== */
+
+function showWord() {
+
+  current = chooseWord();
+
+  recentIds.push(current.id);
+
+  if (recentIds.length > 3) {
+    recentIds.shift();
+  }
+
+  answered = false;
+  selectedDeclension = null;
+
+  document
+    .getElementById("question")
+    .textContent =
+    current.fr;
+
+  document
+    .getElementById("category")
+    .textContent =
+    categoryName(current.type);
+
+  document
+    .getElementById("answer")
+    .value = "";
+
+  document
+    .getElementById("feedback")
+    .innerHTML = "";
+
+  document
+    .getElementById("mainButton")
+    .textContent =
+    "Vérifier";
+
+  document
+    .getElementById("skipButton")
+    .style.display =
+    "block";
+
+
+  const nounLike =
+    current.type === "noun"
+    ||
+    current.type === "proper";
+
+
+  document
+    .getElementById("declensions")
+    .style.display =
+    nounLike
+      ? "flex"
+      : "none";
+
+
+  for (let i=1; i<=3; i++) {
+
+    document
+      .getElementById("decl"+i)
+      .classList.remove("selected");
+
+  }
+
+
+  document
+    .getElementById("answer")
+    .focus();
+
+  updateStats();
+}
+
+
+/* =====================================================
+   DÉCLINAISON
+   ===================================================== */
+
+function selectDeclension(n) {
+
+  selectedDeclension = n;
+
+  for (let i=1; i<=3; i++) {
+
+    document
+      .getElementById("decl"+i)
+      .classList.remove("selected");
+
+  }
+
+  document
+    .getElementById("decl"+n)
+    .classList.add("selected");
+
+}
+
+
+/* =====================================================
+   ANALYSE D'UN NOM
+
+   Exemple :
+
+   ὁ ἱππος ἱππου
+   ===================================================== */
+
+function parseNoun(text) {
+
+  const parts =
+    text
+      .trim()
+      .replace(/\s+/g," ")
+      .split(" ");
+
+  if (parts.length !== 3) {
+    return null;
+  }
 
   return {
     article: parts[0],
@@ -242,144 +1315,428 @@ function parseAnswer(text) {
   };
 }
 
-function selectDeclension(number) {
-  selectedDeclension = number;
 
-  for (let i = 1; i <= 3; i++) {
-    document.getElementById("decl" + i)
-      .classList.remove("selected");
+/* =====================================================
+   ACTION PRINCIPALE
+   ===================================================== */
+
+function mainAction() {
+
+  if (answered) {
+    showWord();
   }
 
-  document.getElementById("decl" + number)
-    .classList.add("selected");
-}
-
-function showWord() {
-  document.getElementById("question").textContent =
-    lexicon[currentIndex].fr;
-
-  document.getElementById("answer").value = "";
-  document.getElementById("feedback").innerHTML = "";
-
-  selectedDeclension = null;
-  answered = false;
-
-  for (let i = 1; i <= 3; i++) {
-    document.getElementById("decl" + i)
-      .classList.remove("selected");
+  else {
+    checkAnswer();
   }
 
-  document.getElementById("answer").focus();
 }
+
+
+/* =====================================================
+   VÉRIFICATION
+   ===================================================== */
 
 function checkAnswer() {
-  if (answered) return;
 
-  const current = lexicon[currentIndex];
-  const user = parseAnswer(
-    document.getElementById("answer").value
-  );
+  const nounLike =
+    current.type === "noun"
+    ||
+    current.type === "proper";
+
+
+  if (nounLike) {
+
+    checkNoun();
+
+  }
+
+  else {
+
+    checkSimple();
+
+  }
+
+}
+
+
+/* =====================================================
+   VÉRIFICATION NOM
+   ===================================================== */
+
+function checkNoun() {
+
+  const user =
+    parseNoun(
+      document
+        .getElementById("answer")
+        .value
+    );
+
 
   if (!user) {
-    document.getElementById("feedback").innerHTML =
-      `<div class="wrong">
-        Écris : article + nominatif + terminaison du génitif
-      </div>`;
+
+    document
+      .getElementById("feedback")
+      .innerHTML =
+      `
+      <div class="wrong">
+      Écris :
+      article + nominatif + génitif complet
+      </div>
+      `;
+
     return;
   }
+
 
   if (selectedDeclension === null) {
-    document.getElementById("feedback").innerHTML =
-      `<div class="wrong">
-        Choisis 1re, 2e ou 3e déclinaison.
-      </div>`;
+
+    document
+      .getElementById("feedback")
+      .innerHTML =
+      `
+      <div class="wrong">
+      Choisis aussi la déclinaison.
+      </div>
+      `;
+
     return;
   }
 
+
   const articleOK =
-    normalizeGreek(user.article) === normalizeGreek(current.article);
+    normalizeGreek(user.article)
+    ===
+    normalizeGreek(current.article);
 
   const wordOK =
-    normalizeGreek(user.word) === normalizeGreek(current.word);
+    normalizeGreek(user.word)
+    ===
+    normalizeGreek(current.word);
 
   const genitiveOK =
-    normalizeGreek(user.genitive) === normalizeGreek(current.genitive);
+    normalizeGreek(user.genitive)
+    ===
+    normalizeGreek(current.genitive);
 
   const declensionOK =
-    selectedDeclension === current.declension;
+    selectedDeclension
+    ===
+    current.declension;
 
-  attempts++;
+
+  const everythingOK =
+    articleOK
+    &&
+    wordOK
+    &&
+    genitiveOK
+    &&
+    declensionOK;
+
+
   answered = true;
 
   let html = "";
+
 
   html += articleOK
     ? `<div class="correct">✓ Article</div>`
     : `<div class="wrong">✗ Article</div>`;
 
+
   html += wordOK
     ? `<div class="correct">✓ Nominatif</div>`
     : `<div class="wrong">✗ Nominatif</div>`;
+
 
   html += genitiveOK
     ? `<div class="correct">✓ Génitif</div>`
     : `<div class="wrong">✗ Génitif</div>`;
 
-  html += declensionOK
-    ? `<div class="correct">✓ ${current.declension}e déclinaison</div>`
-    : `<div class="wrong">✗ Déclinaison</div>`;
 
-  if (articleOK && wordOK && genitiveOK && declensionOK) {
-    score++;
+  html += declensionOK
+    ? `<div class="correct">
+       ✓ ${current.declension}e déclinaison
+       </div>`
+    : `<div class="wrong">
+       ✗ Déclinaison
+       </div>`;
+
+
+  const ws =
+    wordStats(current.id);
+
+
+  if (everythingOK) {
+
+    ws.correct++;
+    saved.stats.correct++;
+
     html =
-      `<div class="correct">✓ Bonne réponse !</div><br>` + html;
-  } else {
-    html += `
-      <div class="correction">
-        <strong>${current.article} ${current.word} ${current.genitive}</strong>
-        Déclinaison : <strong>${current.declension}e</strong>
-      </div>
-    `;
+      `<div class="correct">
+       ✓ Bonne réponse !
+       </div><br>`
+       + html;
+
   }
 
-  document.getElementById("feedback").innerHTML = html;
+  else {
+
+    ws.wrong++;
+    saved.stats.wrong++;
+
+    html +=
+      `
+      <div class="correction">
+
+      <strong>
+      ${current.article}
+      ${current.word}
+      ${current.genitive}
+      </strong>
+
+      <br>
+
+      ${current.declension}e déclinaison
+
+      </div>
+      `;
+
+  }
+
+
+  finishQuestion(html);
+}
+
+
+/* =====================================================
+   VERBES / ADJECTIFS / ETC.
+   ===================================================== */
+
+function checkSimple() {
+
+  const user =
+    normalizeGreek(
+      document
+        .getElementById("answer")
+        .value
+    );
+
+  if (!user) {
+    return;
+  }
+
+
+  const correct =
+    user
+    ===
+    normalizeGreek(current.answer);
+
+
+  answered = true;
+
+  const ws =
+    wordStats(current.id);
+
+  let html;
+
+
+  if (correct) {
+
+    ws.correct++;
+    saved.stats.correct++;
+
+    html =
+      `
+      <div class="correct">
+      ✓ Bonne réponse !
+      </div>
+      `;
+
+  }
+
+  else {
+
+    ws.wrong++;
+    saved.stats.wrong++;
+
+    html =
+      `
+      <div class="wrong">
+      ✗ À revoir
+      </div>
+
+      <div class="correction">
+      <strong>
+      ${current.answer}
+      </strong>
+      </div>
+      `;
+
+  }
+
+
+  finishQuestion(html);
+}
+
+
+/* =====================================================
+   JE PASSE
+   ===================================================== */
+
+function skipWord() {
+
+  if (answered) {
+    return;
+  }
+
+  answered = true;
+
+  const ws =
+    wordStats(current.id);
+
+  ws.skipped++;
+  saved.stats.skipped++;
+
+
+  let answer;
+
+
+  if (
+    current.type === "noun"
+    ||
+    current.type === "proper"
+  ) {
+
+    answer =
+      `
+      ${current.article}
+      ${current.word}
+      ${current.genitive}
+      <br>
+      ${current.declension}e déclinaison
+      `;
+
+  }
+
+  else {
+
+    answer =
+      current.answer;
+
+  }
+
+
+  const html =
+    `
+    <div class="correction">
+
+    <strong>
+    ${answer}
+    </strong>
+
+    </div>
+    `;
+
+
+  finishQuestion(html);
+}
+
+
+/* =====================================================
+   FIN DE QUESTION
+   ===================================================== */
+
+function finishQuestion(html) {
+
+  document
+    .getElementById("feedback")
+    .innerHTML =
+    html;
+
+  document
+    .getElementById("mainButton")
+    .textContent =
+    "Mot suivant";
+
+  document
+    .getElementById("skipButton")
+    .style.display =
+    "none";
+
+  saveProgress();
   updateStats();
 }
 
-function nextWord() {
-  let newIndex;
 
-  do {
-    newIndex = Math.floor(Math.random() * lexicon.length);
-  } while (
-    newIndex === currentIndex &&
-    lexicon.length > 1
-  );
-
-  currentIndex = newIndex;
-  showWord();
-}
+/* =====================================================
+   STATISTIQUES
+   ===================================================== */
 
 function updateStats() {
-  const percentage =
-    attempts === 0
-      ? 0
-      : Math.round(score / attempts * 100);
 
-  document.getElementById("stats").textContent =
-    `Score : ${score}/${attempts} — ${percentage}%`;
+  const total =
+    saved.stats.correct
+    +
+    saved.stats.wrong
+    +
+    saved.stats.skipped;
+
+
+  let success = 0;
+
+  if (total > 0) {
+
+    success =
+      Math.round(
+        saved.stats.correct
+        /
+        total
+        *
+        100
+      );
+
+  }
+
+
+  document
+    .getElementById("stats")
+    .textContent =
+
+    `${saved.stats.correct} réussis · `
+    +
+    `${saved.stats.wrong} erreurs · `
+    +
+    `${saved.stats.skipped} passés · `
+    +
+    `${success}%`;
+
 }
 
-document.getElementById("answer")
-  .addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-      checkAnswer();
+
+/* =====================================================
+   TOUCHE ENTRÉE
+   ===================================================== */
+
+document
+  .getElementById("answer")
+  .addEventListener(
+    "keydown",
+    function(event) {
+
+      if (event.key === "Enter") {
+        mainAction();
+      }
+
     }
-  });
+  );
+
 
 showWord();
-updateStats();
 
 </script>
+
 </body>
 </html>
