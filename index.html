@@ -100,9 +100,10 @@ h2{margin:6px 0 12px}
 <div class="card"><b>Mots les plus difficiles</b><div id="hardWords"></div></div>
 <div class="card"><b>Par chapitre</b><div id="chapterStats"></div></div>
 <div class="card">
-  <b>Mots acquis</b>
-  <button class="secondary" onclick="toggleAcquiredList()">Afficher la liste des mots acquis</button>
-  <div id="acquiredList" class="hidden" style="margin-top:8px"></div>
+  <details id="acquiredDetails" ontoggle="renderAcquiredListIfOpen()">
+    <summary style="cursor:pointer;font-weight:700">Mots acquis</summary>
+    <div id="acquiredList" style="margin-top:8px"></div>
+  </details>
 </div>
 
 
@@ -163,6 +164,7 @@ if(!state.totals)state.totals={correct:0,wrong:0,skipped:0};
 if(state.sessionCount===undefined)state.sessionCount=0;
 if(!state.sessionStats)state.sessionStats={correct:0,wrong:0,skipped:0};
 if(!state.sessionWords)state.sessionWords={};
+if(state.sessionAcquired===undefined)state.sessionAcquired=0;
 if(!state.acquiredIds)state.acquiredIds=[];
 
 // Migration des versions précédentes :
@@ -187,10 +189,15 @@ function isAcquired(id){
  return state.acquiredIds.includes(id);
 }
 function markAcquired(id){
- if(!state.acquiredIds.includes(id))state.acquiredIds.push(id);
+ const newlyAcquired=!state.acquiredIds.includes(id);
+ if(newlyAcquired){
+   state.acquiredIds.push(id);
+   state.sessionAcquired=(state.sessionAcquired||0)+1;
+ }
  const s=ws(id);
  s.acquired=true;
  save();
+ return newlyAcquired;
 }
 function categoryName(t){return {noun:"Nom",proper:"Nom propre",adjective:"Adjectif",verb:"Verbe",adverb:"Adverbe",conjunction:"Conjonction",pronoun:"Pronom",article:"Article",particle:"Particule",number:"Nombre",preposition:"Préposition",phrase:"Expression",interjection:"Interjection",other:"Autre"}[t]||t;}
 function showPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));document.getElementById(id==="review"?"navReview":id==="add"?"navAdd":"navStats").classList.add("active");if(id==="stats")renderStats();}
@@ -226,6 +233,7 @@ function parseNoun(t){const p=t.trim().replace(/\s+/g," ").split(" ");return p.l
 function mainAction(){answered?showWord():checkAnswer();}
 function checkAnswer(){if(current.type==="noun")checkNoun();else if(current.type==="preposition")checkPrep();else checkSimple();}
 function stamp(ok,skipped=false){
+ justAcquired=false;
  const s=ws(current.id);
  const day=new Date().toISOString().slice(0,10);
  state.sessionCount=(state.sessionCount||0)+1;
@@ -246,9 +254,9 @@ function stamp(ok,skipped=false){
    state.totals.correct++;
    state.sessionStats.correct++;sw.correct++;
    if(current.type==="proper"){
-     markAcquired(current.id);
+     justAcquired=markAcquired(current.id);
    } else if(s.correct>=3 && sw.correct>=2){
-     markAcquired(current.id);
+     justAcquired=markAcquired(current.id);
    }
  }else{
    s.wrong++;
@@ -258,7 +266,7 @@ function stamp(ok,skipped=false){
  }
  save();
 }
-function finish(html,ok,skipped=false){answered=true;stamp(ok,skipped);document.getElementById("feedback").innerHTML=html;document.getElementById("mainButton").textContent="Mot suivant";document.getElementById("skipButton").classList.add("hidden");updateMini();}
+function finish(html,ok,skipped=false){answered=true;stamp(ok,skipped);if(justAcquired)html='<div class="correct"><strong>Bravo ! Un de plus !</strong></div>'+html;document.getElementById("feedback").innerHTML=html;document.getElementById("mainButton").textContent="Mot suivant";document.getElementById("skipButton").classList.add("hidden");updateMini();}
 function checkNoun(){
  const u=parseNoun(document.getElementById("answer").value);if(!u){document.getElementById("feedback").innerHTML='<div class="wrong">Écris : article + nominatif + génitif complet</div>';return;}
  if(selectedDeclension===null){document.getElementById("feedback").innerHTML='<div class="wrong">Choisis aussi la déclinaison.</div>';return;}
@@ -277,10 +285,10 @@ function skipWord(){if(answered)return;let ans=current.answer||"";if(current.typ
 function updateMini(){
  const ss=state.sessionStats||{correct:0,wrong:0,skipped:0};
  document.getElementById("sessionMini").textContent=
-   ss.correct+" réussis · "+ss.wrong+" erreurs · "+ss.skipped+" passés";
+   ss.correct+" réussis · "+ss.wrong+" erreurs · "+ss.skipped+" passés · "+(state.sessionAcquired||0)+" acquis";
 }
 function finishSession(){state.cleanExit=true;save();showPage("stats");}
-function startReview(){state.cleanExit=false;state.sessionStarted=true;state.sessionCount=0;state.sessionStats={correct:0,wrong:0,skipped:0};state.sessionWords={};save();showPage("review");showWord();}
+function startReview(){state.cleanExit=false;state.sessionStarted=true;state.sessionCount=0;state.sessionStats={correct:0,wrong:0,skipped:0};state.sessionWords={};state.sessionAcquired=0;save();showPage("review");showWord();}
 
 function statusFor(item){const s=state.words[item.id];if(isAcquired(item.id))return"acquired";if(!s||(!s.correct&&!s.wrong&&!s.skipped))return"never";if((s.streak||0)>0)return"consolidate";return"review";}
 function renderStats(){
@@ -332,43 +340,39 @@ function savePersonal(){
 }
 
 
-function toggleAcquiredList(){
+function renderAcquiredListIfOpen(){
+  const details=document.getElementById("acquiredDetails");
   const box=document.getElementById("acquiredList");
-  const hidden=box.classList.contains("hidden");
+  if(!details || !box || !details.open)return;
 
-  if(hidden){
-    const acquired=allLexicon()
-      .filter(x=>isAcquired(x.id))
-      .sort((a,b)=>{
-        const ca=CHAPTER_ORDER.indexOf(a.chapter);
-        const cb=CHAPTER_ORDER.indexOf(b.chapter);
-        if(a.chapter==="Perso" && b.chapter!=="Perso") return 1;
-        if(b.chapter==="Perso" && a.chapter!=="Perso") return -1;
-        if(ca!==cb) return ca-cb;
-        return a.fr.localeCompare(b.fr,"fr");
-      });
+  const acquired=allLexicon()
+    .filter(x=>isAcquired(x.id))
+    .sort((a,b)=>{
+      const ca=CHAPTER_ORDER.indexOf(a.chapter);
+      const cb=CHAPTER_ORDER.indexOf(b.chapter);
+      if(a.chapter==="Perso" && b.chapter!=="Perso") return 1;
+      if(b.chapter==="Perso" && a.chapter!=="Perso") return -1;
+      if(ca!==cb) return ca-cb;
+      return a.fr.localeCompare(b.fr,"fr");
+    });
 
-    if(!acquired.length){
-      box.innerHTML="Aucun mot acquis pour l’instant.";
-    }else{
-      const groups={};
-      acquired.forEach(x=>{
-        const ch=x.chapter==="Perso"?"Perso":"Chap. "+x.chapter;
-        if(!groups[ch])groups[ch]=[];
-        let grec=x.word || x.answer || "";
-        if(x.type==="noun")grec=(x.article?x.article+" ":"")+x.word+" "+x.genitive;
-        groups[ch].push("<div><strong>"+x.fr+"</strong> — "+grec+"</div>");
-      });
-
-      box.innerHTML=Object.entries(groups)
-        .map(([ch,items])=>"<div style='margin:10px 0 4px'><b>"+ch+"</b></div>"+items.join(""))
-        .join("");
-    }
-
-    box.classList.remove("hidden");
-  }else{
-    box.classList.add("hidden");
+  if(!acquired.length){
+    box.innerHTML="Aucun mot acquis pour l’instant.";
+    return;
   }
+
+  const groups={};
+  acquired.forEach(x=>{
+    const ch=x.chapter==="Perso"?"Perso":"Chap. "+x.chapter;
+    if(!groups[ch])groups[ch]=[];
+    let grec=x.word || x.answer || "";
+    if(x.type==="noun")grec=(x.article?x.article+" ":"")+x.word+" "+x.genitive;
+    groups[ch].push("<div><strong>"+x.fr+"</strong> — "+grec+"</div>");
+  });
+
+  box.innerHTML=Object.entries(groups)
+    .map(([ch,items])=>"<div style='margin:10px 0 4px'><b>"+ch+"</b></div>"+items.join(""))
+    .join("");
 }
 
 function exportProgress(){
