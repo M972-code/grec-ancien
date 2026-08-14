@@ -214,7 +214,27 @@ function activeLexicon(){
  return pool.filter(x=>!isAcquired(x.id));
 }
 function weight(item){const s=ws(item.id);let w=item.type==="proper"?0.18:1;w*=1+s.wrong*1.8+s.skipped*3;w/=1+s.correct*.5;if(recentIds.includes(item.id))w*=.15;return Math.max(w,.03);}
-function chooseWord(){const pool=activeLexicon();if(!pool.length)return null;const weights=pool.map(weight),total=weights.reduce((a,b)=>a+b,0);let r=Math.random()*total;for(let i=0;i<pool.length;i++){r-=weights[i];if(r<=0)return pool[i];}return pool[0];}
+function chooseWord(){
+ const pool=activeLexicon();
+ if(!pool.length)return null;
+
+ // Ne jamais proposer deux fois de suite le même mot,
+ // sauf s'il ne reste plus que celui-là.
+ let candidates=pool;
+ if(pool.length>1 && current){
+   const withoutCurrent=pool.filter(x=>x.id!==current.id);
+   if(withoutCurrent.length)candidates=withoutCurrent;
+ }
+
+ const weights=candidates.map(weight);
+ const total=weights.reduce((a,b)=>a+b,0);
+ let r=Math.random()*total;
+ for(let i=0;i<candidates.length;i++){
+   r-=weights[i];
+   if(r<=0)return candidates[i];
+ }
+ return candidates[0];
+}
 function resetAndShow(){recentIds=[];showWord();}
 function showWord(){
  current=chooseWord(); if(!current){document.getElementById("category").textContent="";document.getElementById("question").textContent="Tous les mots sélectionnés sont acquis ✓";document.getElementById("answer").value="";document.getElementById("declensions").classList.add("hidden");document.getElementById("cases").classList.add("hidden");document.getElementById("mainButton").classList.add("hidden");document.getElementById("skipButton").classList.add("hidden");return;}
