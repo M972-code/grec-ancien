@@ -51,9 +51,12 @@ h2{margin:6px 0 12px}
 <option value="UP_TO">Jusqu'à</option><option value="ONLY">Chapitre seul</option><option value="ALL">Tous</option><option value="PERSONAL">Perso</option>
 </select>
 <select id="chapterFilter" onchange="resetAndShow()"><option value="Α">1 · Α</option><option value="Β">2 · Β</option><option value="Γ">3 · Γ</option><option value="Δ">4 · Δ</option><option value="Ε">5 · Ε</option><option value="Ϛ">6 · Ϛ</option><option value="Ζ">7 · Ζ</option><option value="Η">8 · Η</option><option value="Θ">9 · Θ</option><option value="Ι">10 · Ι</option><option value="ΙΑ">11 · ΙΑ</option><option value="ΙΒ">12 · ΙΒ</option><option value="ΙΓ">13 · ΙΓ</option><option value="ΙΔ">14 · ΙΔ</option><option value="ΙΕ">15 · ΙΕ</option><option value="ΙϚ">16 · ΙϚ</option><option value="ΙΖ">17 · ΙΖ</option><option value="ΙΗ" selected>18 · ΙΗ</option></select>
-<button id="reviewAcquiredButton" class="secondary" onclick="beginAcquiredReviewSession()" style="margin-top:6px">Réviser les mots acquis</button>
+<button id="dueReviewButton" class="secondary" onclick="beginDueReviewSession()" style="margin-top:6px">Révisions du jour (0)</button>
+ <button id="reviewAcquiredButton" class="secondary" onclick="beginAcquiredReviewSession()" style="margin-top:6px">Réviser les mots acquis</button>
 </div>
 <div id="question" class="question"></div>
+<div id="flashcard" class="card hidden" onclick="revealFlashcard()" style="cursor:pointer;text-align:center;padding:24px 12px;min-height:110px" role="button" tabindex="0"><div id="flashcardHint" class="mini">Touchez pour révéler la réponse grecque</div><div id="flashcardAnswer" style="font-size:26px;font-weight:700;margin-top:12px"></div></div>
+<div id="flashcardRatings" class="hidden"><button onclick="rateFlashcard(true)">✓ Je savais</button><button class="secondary" onclick="rateFlashcard(false)">✗ Je ne savais pas</button></div>
 <input id="answer" placeholder="Réponse en grec" autocomplete="off" autocapitalize="none" spellcheck="false">
 <div id="declensions" class="declensions">
 <button id="decl1" onclick="selectDeclension(1)">1re</button><button id="decl2" onclick="selectDeclension(2)">2e</button><button id="decl3" onclick="selectDeclension(3)">3e</button>
@@ -98,7 +101,8 @@ h2{margin:6px 0 12px}
 <div class="stat"><b id="stReview">0</b>À revoir</div>
 <div class="stat"><b id="stNever">0</b>Jamais vus</div>
 </div>
-<div class="card"><b id="stRate">0%</b> de réussite sur la séance<br><span id="stToday"></span></div>
+<div class="card"><b id="stDue">0</b> mots acquis à réviser aujourd’hui</div>
+ <div class="card"><b id="stRate">0%</b> de réussite sur la séance<br><span id="stToday"></span></div>
 <div class="card"><b>Mots les plus difficiles</b><div id="hardWords"></div></div>
 <div class="card"><b>Par chapitre</b><div id="chapterStats"></div></div>
 <div class="card">
@@ -169,6 +173,7 @@ if(!state.sessionWords)state.sessionWords={};
 if(state.sessionAcquired===undefined)state.sessionAcquired=0;
 if(state.sessionAttempts===undefined)state.sessionAttempts=0;
 if(!state.acquiredIds)state.acquiredIds=[];
+if(!state.schedule)state.schedule={};
 
 // Migration des versions précédentes :
 // - les mots déjà marqués "acquired"
@@ -184,10 +189,103 @@ state.migrationChecked=true;
 state.cleanExit=false; state.sessionStarted=true; save();
 let current=null,answered=false,selectedDeclension=null,selectedCases=[],recentIds=[],pCases=[];
 
+let dueReviewMode=false;
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
 function normalizeGreek(t){let s=(t||"").normalize("NFD").replace(/[\u0300\u0301\u0340\u0341\u0342]/g,"");return s.normalize("NFC").toLowerCase().replace(/[,.;·]/g," ").replace(/[-–—]/g," ").replace(/\s+/g," ").trim();}
 function allLexicon(){return manualLexicon.concat(state.personal);}
 function ws(id){if(!state.words[id])state.words[id]={correct:0,wrong:0,skipped:0,last:"",streak:0,acquired:false};if(state.words[id].streak===undefined)state.words[id].streak=0;if(state.words[id].acquired===undefined)state.words[id].acquired=false;return state.words[id];}
+// Révisions espacées : J+1, J+3, J+7, J+15, J+30.
+const REVIEW_INTERVALS=[1,3,7,15,30];
+function localDay(d=new Date()){
+ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function addDays(day,n){
+ const [y,m,d]=day.split("-").map(Number);
+ const date=new Date(y,m-1,d,12);
+ date.setDate(date.getDate()+n);
+ return localDay(date);
+}
+function ensureSchedule(id){
+ if(!state.schedule)state.schedule={};
+ if(!state.schedule[id])state.schedule[id]={step:0,anchor:localDay(),due:addDays(localDay(),1),completed:false};
+ return state.schedule[id];
+}
+// Répartition initiale des acquis historiques sur 30 jours, une seule fois.
+// Les nouveaux mots acquis ensuite gardent leur échéance normale à J+1.
+function distributeHistoricalAcquired(){
+ if(state.historicalAcquiredDistributed)return;
+ const historical=[...new Set(state.acquiredIds)].filter(id=>allLexicon().some(w=>w.id===id));
+ // Ordre stable : environ le même nombre de mots à chaque date.
+ historical.sort((a,b)=>a.localeCompare(b));
+ const today=localDay();
+ historical.forEach((id,i)=>{
+   // Préserver les échéances déjà réellement commencées.
+   if(state.schedule[id] && state.schedule[id].step>0)return;
+   const offset=Math.floor(i*30/historical.length);
+   state.schedule[id]={step:0,anchor:addDays(today,offset-1),due:addDays(today,offset),completed:false};
+ });
+ state.historicalAcquiredDistributed=true;
+ state.historicalAcquiredStartsToday=true;
+ save();
+}
+// Migration unique : avancer d’un jour les séries historiques déjà programmées.
+function migrateHistoricalStartToday(){
+ if(state.historicalAcquiredStartsToday)return;
+ if(state.historicalAcquiredDistributed){
+  const today=localDay();
+  for(const id of state.acquiredIds){
+   const r=state.schedule&&state.schedule[id];
+   if(r && r.step===0 && !r.completed && r.due>today){
+    r.anchor=addDays(r.anchor||today,-1);
+    r.due=addDays(r.due,-1);
+   }
+  }
+ }
+ state.historicalAcquiredStartsToday=true;
+ save();
+}
+function flashcardMode(){return dueReviewMode;}
+function flashcardAnswer(item){
+ if(item.type==='noun')return [item.article,item.word,item.genitive].filter(Boolean).join(' ')+' · '+item.declension+'e déclinaison';
+ if(item.type==='preposition')return (item.answer||'')+' · + '+(item.cases||[]).map(c=>({gen:'génitif',dat:'datif',acc:'accusatif'}[c])).join(', ');
+ return item.answer||item.word||'';
+}
+let flashcardRevealed=false;
+function revealFlashcard(){
+ if(!flashcardMode()||!current||flashcardRevealed)return;
+ flashcardRevealed=true;
+ document.getElementById('flashcardHint').textContent='Réponse en grec';
+ document.getElementById('flashcardAnswer').textContent=flashcardAnswer(current);
+ document.getElementById('flashcardRatings').classList.remove('hidden');
+}
+function rateFlashcard(ok){
+ if(!flashcardMode()||!current||!flashcardRevealed)return;
+ stamp(ok,false);
+ showWord();
+}
+function dueWords(){
+ return selectedLexicon().filter(x=>isAcquired(x.id)&&!ensureSchedule(x.id).completed&&ensureSchedule(x.id).due<=localDay());
+}
+function updateDueCounter(){
+ const n=dueWords().length;
+ const b=document.getElementById("dueReviewButton");
+ if(b)b.textContent="Révisions du jour ("+n+")";
+ const stat=document.getElementById("stDue");if(stat)stat.textContent=n;
+}
+function recordScheduledReview(id,ok){
+ const r=ensureSchedule(id);
+ if(ok){
+   r.step++;
+   if(r.step>=REVIEW_INTERVALS.length){r.completed=true;r.due=null;}
+   else r.due=addDays(r.anchor||localDay(),REVIEW_INTERVALS[r.step]);
+   // Ne pas programmer une échéance dans le passé si la révision était en retard.
+   if(r.due && r.due<=localDay())r.due=addDays(localDay(),1);
+ }else{
+   // Réessayer demain au même palier.
+   r.due=addDays(localDay(),1);
+ }
+ save();updateDueCounter();
+}
 function isAcquired(id){
  return state.acquiredIds.includes(id);
 }
@@ -199,6 +297,7 @@ function markAcquired(id){
  }
  const s=ws(id);
  s.acquired=true;
+ ensureSchedule(id);
  save();
  return newlyAcquired;
 }
@@ -218,6 +317,9 @@ function selectedLexicon(){
 }
 function activeLexicon(){
  const pool=selectedLexicon();
+ if(dueReviewMode){
+   return pool.filter(x=>isAcquired(x.id) && !acquiredReviewDone.has(x.id) && !ensureSchedule(x.id).completed && ensureSchedule(x.id).due<=localDay());
+ }
  if(acquiredReviewMode){
    return pool.filter(x=>isAcquired(x.id) && !acquiredReviewDone.has(x.id));
  }
@@ -247,12 +349,21 @@ function chooseWord(){
 }
 function resetAndShow(){recentIds=[];current=null;showWord();}
 function showWord(){
- current=chooseWord(); if(!current){
+ current=chooseWord();
+ flashcardRevealed=false;
+ document.getElementById("flashcard").classList.toggle("hidden",!flashcardMode()||!current);
+ document.getElementById("flashcardRatings").classList.add("hidden");
+ document.getElementById("flashcardHint").textContent="Touchez pour révéler la réponse grecque";
+ document.getElementById("flashcardAnswer").textContent="";
+ if(!current){
    document.getElementById("category").textContent="";
-   document.getElementById("question").textContent=acquiredReviewMode
+   document.getElementById("question").textContent=dueReviewMode
+     ?"Toutes les révisions prévues pour aujourd’hui sont terminées ✓"
+     :acquiredReviewMode
      ?"Tous les mots acquis sélectionnés ont été réussis une fois ✓"
      :"Tous les mots sélectionnés sont acquis ✓";
    document.getElementById("answer").value="";
+   document.getElementById("answer").classList.toggle("hidden",flashcardMode());
    document.getElementById("declensions").classList.add("hidden");
    document.getElementById("cases").classList.add("hidden");
    document.getElementById("mainButton").classList.add("hidden");
@@ -262,11 +373,12 @@ function showWord(){
  recentIds.push(current.id);if(recentIds.length>4)recentIds.shift();answered=false;selectedDeclension=null;selectedCases=[];
  document.getElementById("category").textContent=(current.chapter==="Perso"?"Perso":"Chap. "+current.chapter)+" · "+categoryName(current.type);
  document.getElementById("question").textContent=current.fr;document.getElementById("answer").value="";document.getElementById("feedback").innerHTML="";
- document.getElementById("mainButton").classList.remove("hidden");document.getElementById("mainButton").textContent="Vérifier";document.getElementById("skipButton").classList.remove("hidden");
- document.getElementById("declensions").classList.toggle("hidden",current.type!=="noun");
- document.getElementById("cases").classList.toggle("hidden",current.type!=="preposition");
+ document.getElementById("mainButton").classList.toggle("hidden",flashcardMode());document.getElementById("mainButton").textContent="Vérifier";document.getElementById("skipButton").classList.toggle("hidden",flashcardMode());
+ document.getElementById("answer").classList.toggle("hidden",flashcardMode());
+ document.getElementById("declensions").classList.toggle("hidden",flashcardMode()||current.type!=="noun");
+ document.getElementById("cases").classList.toggle("hidden",flashcardMode()||current.type!=="preposition");
  ["decl1","decl2","decl3","casegen","casedat","caseacc"].forEach(id=>document.getElementById(id).classList.remove("selected"));
- updateMini();setTimeout(()=>document.getElementById("answer").focus(),20);
+ updateMini();if(!flashcardMode())setTimeout(()=>document.getElementById("answer").focus(),20);
 }
 function selectDeclension(n){selectedDeclension=n;[1,2,3].forEach(i=>document.getElementById("decl"+i).classList.toggle("selected",i===n));}
 function toggleCase(c){const i=selectedCases.indexOf(c);if(i>=0)selectedCases.splice(i,1);else selectedCases.push(c);document.getElementById("case"+c).classList.toggle("selected",selectedCases.includes(c));}
@@ -286,6 +398,7 @@ function stamp(ok,skipped=false){
  s.last=day;
 
  if(skipped){
+   if(dueReviewMode){acquiredReviewDone.add(current.id);recordScheduledReview(current.id,false);}
    s.skipped++;
    s.streak=0;
    state.totals.skipped++;
@@ -296,7 +409,10 @@ function stamp(ok,skipped=false){
    state.totals.correct++;
    state.sessionStats.correct++;sw.correct++;
 
-   if(acquiredReviewMode){
+   if(dueReviewMode){
+     acquiredReviewDone.add(current.id);
+     recordScheduledReview(current.id,true);
+   }else if(acquiredReviewMode){
      // Procédure séparée : le mot, déjà acquis, doit seulement être réussi
      // une fois pendant cette révision des acquis.
      acquiredReviewDone.add(current.id);
@@ -306,6 +422,7 @@ function stamp(ok,skipped=false){
      justAcquired=markAcquired(current.id);
    }
  }else{
+   if(dueReviewMode){acquiredReviewDone.add(current.id);recordScheduledReview(current.id,false);}
    s.wrong++;
    s.streak=0;
    state.totals.wrong++;
@@ -331,8 +448,8 @@ function checkSimple(){const ok=normalizeGreek(document.getElementById("answer")
 function skipWord(){if(answered)return;let ans=current.answer||"";if(current.type==="noun")ans=current.article+" "+current.word+" "+current.genitive+"<br>"+current.declension+"e déclinaison";if(current.type==="preposition"){const l={gen:"génitif",dat:"datif",acc:"accusatif"};ans=current.answer+"<br>"+current.cases.map(c=>l[c]).join(" + ");}finish('<div class="correction"><strong>'+ans+'</strong></div>',false,true);document.getElementById("mainButton").classList.add("hidden");setTimeout(()=>{document.getElementById("mainButton").classList.remove("hidden");showWord();},2200);}
 function updateMini(){
  const ss=state.sessionStats||{correct:0,wrong:0,skipped:0};
- const tail=acquiredReviewMode
-   ? acquiredReviewDone.size+" acquis réussis"
+ const tail=(acquiredReviewMode||dueReviewMode)
+   ? acquiredReviewDone.size+" acquis révisés"
    : (state.sessionAcquired||0)+" acquis";
  document.getElementById("sessionMini").textContent=
    (state.sessionAttempts||0)+" tentatives · "+
@@ -352,6 +469,8 @@ function resetSessionCounters(){
  answered=false;
 }
 function beginReviewSession(){
+ dueReviewMode=false;
+ document.getElementById("answer").classList.remove("hidden");
  acquiredReviewMode=false;
  acquiredReviewDone=new Set();
  resetSessionCounters();
@@ -361,6 +480,8 @@ function beginReviewSession(){
  showWord();
 }
 function beginAcquiredReviewSession(){
+ dueReviewMode=false;
+ document.getElementById("answer").classList.remove("hidden");
  acquiredReviewMode=true;
  acquiredReviewDone=new Set();
  resetSessionCounters();
@@ -369,10 +490,19 @@ function beginAcquiredReviewSession(){
  showPage("review");
  showWord();
 }
+function beginDueReviewSession(){
+ dueReviewMode=true;
+ acquiredReviewMode=false;
+ acquiredReviewDone=new Set();
+ resetSessionCounters();
+ document.getElementById("reviewProcedure").textContent="Révisions à échéance";
+ save();showPage("review");showWord();
+}
 function startReview(){beginReviewSession();}
 
 function statusFor(item){const s=state.words[item.id];if(isAcquired(item.id))return"acquired";if(!s||(!s.correct&&!s.wrong&&!s.skipped))return"never";if((s.streak||0)>0)return"consolidate";return"review";}
 function renderStats(){
+ updateDueCounter();
  const pool=allLexicon(), counts={acquired:0,consolidate:0,review:0,never:0};pool.forEach(x=>counts[statusFor(x)]++);
  stAcquired.textContent=counts.acquired;stConsolidate.textContent=counts.consolidate;stReview.textContent=counts.review;stNever.textContent=counts.never;
  const ss=state.sessionStats||{correct:0,wrong:0,skipped:0};
@@ -517,6 +647,10 @@ function importProgress(event){
       if(!state.sessionStats) state.sessionStats = {correct:0,wrong:0,skipped:0};
       if(!state.sessionWords) state.sessionWords = {};
       if(!state.acquiredIds) state.acquiredIds = [];
+      if(!state.schedule) state.schedule = {};
+      distributeHistoricalAcquired();
+      migrateHistoricalStartToday();
+      state.acquiredIds.forEach(ensureSchedule);
 
       save();
       renderStats();
@@ -534,6 +668,6 @@ function importProgress(event){
 }
 
 document.getElementById("answer").addEventListener("keydown",e=>{if(e.key==="Enter")mainAction();});
-personalTypeChanged();showWord();updateMini();
+personalTypeChanged();distributeHistoricalAcquired();migrateHistoricalStartToday();state.acquiredIds.forEach(ensureSchedule);save();updateDueCounter();showWord();updateMini();
 </script>
 </body></html>
