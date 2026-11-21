@@ -33,6 +33,8 @@ button{width:100%;border:0;border-radius:11px;padding:11px;font-size:17px;margin
 .formrow{margin:9px 0}
 .formrow label{font-size:13px;color:#666;display:block;margin-bottom:4px}
 h2{margin:6px 0 12px}
+.compact-review-button{font-size:12px;padding:7px 5px;margin:3px 0;line-height:1.2;border-radius:8px;white-space:normal}
+@media(max-width:390px){.compact-review-button{font-size:11px;padding:7px 3px}}
 </style>
 </head>
 <body>
@@ -51,8 +53,8 @@ h2{margin:6px 0 12px}
 <option value="UP_TO">Jusqu'à</option><option value="ONLY">Chapitre seul</option><option value="ALL">Tous</option><option value="PERSONAL">Perso</option>
 </select>
 <select id="chapterFilter" onchange="resetAndShow()"><option value="Α">1 · Α</option><option value="Β">2 · Β</option><option value="Γ">3 · Γ</option><option value="Δ">4 · Δ</option><option value="Ε">5 · Ε</option><option value="Ϛ">6 · Ϛ</option><option value="Ζ">7 · Ζ</option><option value="Η">8 · Η</option><option value="Θ">9 · Θ</option><option value="Ι">10 · Ι</option><option value="ΙΑ">11 · ΙΑ</option><option value="ΙΒ">12 · ΙΒ</option><option value="ΙΓ">13 · ΙΓ</option><option value="ΙΔ">14 · ΙΔ</option><option value="ΙΕ">15 · ΙΕ</option><option value="ΙϚ">16 · ΙϚ</option><option value="ΙΖ">17 · ΙΖ</option><option value="ΙΗ" selected>18 · ΙΗ</option></select>
-<button id="dueReviewButton" class="secondary" onclick="beginDueReviewSession()" style="margin-top:6px">Révisions du jour (0)</button>
- <button id="reviewAcquiredButton" class="secondary" onclick="beginAcquiredReviewSession()" style="margin-top:6px">Réviser les mots acquis</button>
+<button id="dueReviewButton" class="secondary compact-review-button" onclick="beginDueReviewSession()">Révisions du jour (0)</button>
+ <button id="reviewAcquiredButton" class="secondary compact-review-button" onclick="beginAcquiredReviewSession()">Réviser les mots acquis</button>
 </div>
 <div id="question" class="question"></div>
 <div id="flashcard" class="card hidden" onclick="revealFlashcard()" style="cursor:pointer;text-align:center;padding:24px 12px;min-height:110px" role="button" tabindex="0"><div id="flashcardHint" class="mini">Touchez pour révéler la réponse grecque</div><div id="flashcardAnswer" style="font-size:26px;font-weight:700;margin-top:12px"></div></div>
@@ -210,18 +212,18 @@ function ensureSchedule(id){
  if(!state.schedule[id])state.schedule[id]={step:0,anchor:localDay(),due:addDays(localDay(),1),completed:false};
  return state.schedule[id];
 }
-// Répartition initiale des acquis historiques sur 30 jours, une seule fois.
+// Répartition initiale des acquis historiques en séries de 40, une seule fois.
 // Les nouveaux mots acquis ensuite gardent leur échéance normale à J+1.
 function distributeHistoricalAcquired(){
  if(state.historicalAcquiredDistributed)return;
  const historical=[...new Set(state.acquiredIds)].filter(id=>allLexicon().some(w=>w.id===id));
- // Ordre stable : environ le même nombre de mots à chaque date.
+ // Ordre stable : 40 mots par date.
  historical.sort((a,b)=>a.localeCompare(b));
  const today=localDay();
  historical.forEach((id,i)=>{
    // Préserver les échéances déjà réellement commencées.
    if(state.schedule[id] && state.schedule[id].step>0)return;
-   const offset=Math.floor(i*30/historical.length);
+   const offset=Math.floor(i/40);
    state.schedule[id]={step:0,anchor:addDays(today,offset-1),due:addDays(today,offset),completed:false};
  });
  state.historicalAcquiredDistributed=true;
@@ -242,6 +244,26 @@ function migrateHistoricalStartToday(){
   }
  }
  state.historicalAcquiredStartsToday=true;
+ save();
+}
+// Migration unique des séries historiques déjà étalées sur 30 jours vers 40 mots par jour.
+// Ne touche pas aux cartes dont une révision espacée a déjà été validée.
+function migrateHistoricalBatches40(){
+ if(state.historicalBatches40)return;
+ if(state.historicalAcquiredDistributed){
+  const today=localDay();
+  const pending=[...new Set(state.acquiredIds)].filter(id=>{
+   const r=state.schedule&&state.schedule[id];
+   return r && r.step===0 && !r.completed && r.due>=today;
+  }).sort((a,b)=>a.localeCompare(b));
+  pending.forEach((id,i)=>{
+   const r=state.schedule[id];
+   const due=addDays(today,Math.floor(i/40));
+   r.anchor=addDays(due,-1);
+   r.due=due;
+  });
+ }
+ state.historicalBatches40=true;
  save();
 }
 function flashcardMode(){return dueReviewMode;}
@@ -650,6 +672,7 @@ function importProgress(event){
       if(!state.schedule) state.schedule = {};
       distributeHistoricalAcquired();
       migrateHistoricalStartToday();
+      migrateHistoricalBatches40();
       state.acquiredIds.forEach(ensureSchedule);
 
       save();
@@ -668,6 +691,6 @@ function importProgress(event){
 }
 
 document.getElementById("answer").addEventListener("keydown",e=>{if(e.key==="Enter")mainAction();});
-personalTypeChanged();distributeHistoricalAcquired();migrateHistoricalStartToday();state.acquiredIds.forEach(ensureSchedule);save();updateDueCounter();showWord();updateMini();
+personalTypeChanged();distributeHistoricalAcquired();migrateHistoricalStartToday();migrateHistoricalBatches40();state.acquiredIds.forEach(ensureSchedule);save();updateDueCounter();showWord();updateMini();
 </script>
 </body></html>
